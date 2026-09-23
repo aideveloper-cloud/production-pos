@@ -1,0 +1,33 @@
+{
+	auto_https off
+	default_sni 192.168.1.85
+}
+
+https://192.168.1.85, https://192.168.1.173, https://localhost, https://127.0.0.1 {
+	tls /srv/certs/wms.crt /srv/certs/wms.key
+	encode zstd gzip
+	reverse_proxy host.docker.internal:8000 {
+		header_up X-Forwarded-Proto https
+	}
+}
+
+# Public domain via Cloudflare Tunnel: cloudflared -> http://localhost:80 (Cloudflare terminates TLS)
+http://pos.kgarden.co.th {
+	encode zstd gzip
+	reverse_proxy host.docker.internal:8000 {
+		header_up X-Forwarded-Proto https
+	}
+}
+
+:80 {
+	@cert path /wms.crt
+	handle @cert {
+		root * /srv/certs
+		header Content-Type application/x-x509-ca-cert
+		header Content-Disposition "attachment; filename=wms.crt"
+		file_server
+	}
+	handle {
+		redir https://{host}{uri} permanent
+	}
+}

@@ -1,0 +1,6 @@
+# Test image: production image + dev dependencies + tests. Run: docker run --rm --entrypoint php <img> vendor/bin/phpunit
+FROM production-pos-app:latest
+RUN composer install --no-scripts --prefer-dist --no-interaction --no-progress
+COPY tests ./tests
+COPY phpunit.xml ./
+RUN rm -f bootstrap/cache/*.php && php artisan package:discover --ansi

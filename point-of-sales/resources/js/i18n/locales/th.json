@@ -1,0 +1,1176 @@
+{
+    "common": {
+        "buttons": {
+            "add": "เพิ่ม",
+            "edit": "แก้ไข",
+            "delete": "ลบ",
+            "save": "บันทึก",
+            "cancel": "ยกเลิก",
+            "close": "ปิด",
+            "submit": "ส่ง",
+            "back": "กลับ",
+            "next": "ถัดไป",
+            "confirm": "ยืนยัน",
+            "export": "ส่งออก",
+            "import": "นำเข้า",
+            "print": "พิมพ์",
+            "search": "ค้นหา",
+            "filter": "ตัวกรอง",
+            "reset": "รีเซ็ต",
+            "selectAll": "เลือกทั้งหมด",
+            "view": "ดู",
+            "download": "ดาวน์โหลด",
+            "upload": "อัปโหลด",
+            "send": "ส่ง",
+            "approve": "อนุมัติ",
+            "deny": "ปฏิเสธ",
+            "retry": "ลองใหม่",
+            "selectFile": "เลือกไฟล์",
+            "downloadTemplate": "ดาวน์โหลดแม่แบบ"
+        },
+        "labels": {
+            "no": "ไม่",
+            "action": "การดำเนินการ",
+            "status": "สถานะ",
+            "date": "วันที่",
+            "time": "เวลา",
+            "name": "ชื่อ",
+            "description": "รายละเอียด",
+            "total": "รวม",
+            "subtotal": "ยอดรวมย่อย",
+            "note": "หมายเหตุ",
+            "active": "ใช้งาน",
+            "inactive": "ไม่ใช้งาน",
+            "all": "ทั้งหมด",
+            "yes": "ใช่",
+            "required": "จำเป็น",
+            "optional": "ไม่บังคับ",
+            "search": "ค้นหา...",
+            "select": "เลือก",
+            "selected": "ที่เลือก",
+            "loading": "กำลังโหลด...",
+            "processing": "กำลังดำเนินการ...",
+            "success": "สำเร็จ",
+            "error": "ข้อผิดพลาด",
+            "warning": "คำเตือน",
+            "info": "ข้อมูล",
+            "quantity": "จำนวน",
+            "price": "ราคา",
+            "amount": "จำนวนเงิน",
+            "discount": "ส่วนลด",
+            "tax": "ภาษี",
+            "grandTotal": "ยอดรวมทั้งสิ้น",
+            "balance": "ยอดคงเหลือ",
+            "remaining": "คงเหลือ",
+            "paid": "ชำระแล้ว",
+            "unpaid": "ยังไม่ชำระ",
+            "partial": "ชำระบางส่วน",
+            "dueDate": "วันครบกำหนด",
+            "paidDate": "วันที่ชำระเงิน",
+            "overdue": "ค้างชำระ",
+            "days": "วัน"
+        },
+        "messages": {
+            "confirmDelete": "คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?",
+            "confirmAction": "คุณแน่ใจหรือไม่ว่าต้องการดำเนินการต่อ?",
+            "savedSuccess": "บันทึกข้อมูลสำเร็จ",
+            "deletedSuccess": "ลบข้อมูลสำเร็จ",
+            "errorOccurred": "เกิดข้อผิดพลาด",
+            "noData": "ไม่มีข้อมูล",
+            "loadFailed": "โหลดข้อมูลไม่สำเร็จ",
+            "requiredField": "ช่องนี้จำเป็นต้องกรอก",
+            "invalidFormat": "รูปแบบไม่ถูกต้อง"
+        },
+        "pagination": {
+            "showing": "แสดง",
+            "of": "จาก",
+            "entries": "รายการ",
+            "previous": "ก่อนหน้า",
+            "next": "ถัดไป"
+        }
+    },
+    "setup": {
+        "title": "ตั้งค่าเริ่มต้น",
+        "subtitle": "ตั้งค่าแอป POS ในไม่กี่ขั้นตอน",
+        "step": "ขั้นตอน {{current}} จาก {{total}}",
+        "steps": {
+            "store": "โปรไฟล์ร้าน",
+            "businessType": "ประเภทธุรกิจ",
+            "categories": "หมวดหมู่สินค้า",
+            "branches": "สาขา",
+            "account": "บัญชีแอดมินและคลังสินค้า"
+        },
+        "store": {
+            "name": "ชื่อร้าน",
+            "namePlaceholder": "เช่น ร้านเบอร์คาห์ จายา",
+            "address": "ที่อยู่",
+            "phone": "โทรศัพท์",
+            "email": "อีเมล"
+        },
+        "businessType": {
+            "hint": "เลือกประเภทธุรกิจ — เราจะเตรียมหมวดหมู่สินค้าที่เหมาะสม",
+            "food": "อาหารและเครื่องดื่ม",
+            "retail": "ค้าปลีก",
+            "grocery": "ของชำและขายส่ง",
+            "fashion": "แฟชั่น",
+            "pharmacy": "ร้านขายยา",
+            "services": "บริการ"
+        },
+        "categoryOptions": {
+            "food": {
+                "food": "อาหาร",
+                "beverages": "เครื่องดื่ม",
+                "snacks": "ขนมขบเคี้ยว",
+                "coffeeTea": "กาแฟและชา"
+            },
+            "retail": {
+                "general": "ทั่วไป",
+                "electronics": "อิเล็กทรอนิกส์",
+                "homeSupplies": "ของใช้ในบ้าน",
+                "beauty": "ความงาม"
+            },
+            "grocery": {
+                "staples": "ของแห้ง/ของใช้พื้นฐาน",
+                "produce": "ผลิตผล",
+                "meatSeafood": "เนื้อสัตว์และอาหารทะเล",
+                "snacks": "ขนมขบเคี้ยว"
+            },
+            "fashion": {
+                "clothing": "เสื้อผ้า",
+                "shoes": "รองเท้า",
+                "bags": "กระเป๋า",
+                "accessories": "อุปกรณ์เสริม"
+            },
+            "pharmacy": {
+                "otcMedicine": "ยาสามัญประจำบ้าน",
+                "prescriptionMedicine": "ยาตามใบสั่งแพทย์",
+                "vitamins": "วิตามิน",
+                "medicalSupplies": "เวชภัณฑ์"
+            },
+            "services": {
+                "services": "บริการ",
+                "products": "สินค้า",
+                "packages": "แพ็กเกจ"
+            }
+        },
+        "categories": {
+            "hint": "เลือกหมวดหมู่ที่เหมาะสม หรือเพิ่มของคุณเอง",
+            "placeholder": "เพิ่มหมวดหมู่อื่น...",
+            "add": "เพิ่ม"
+        },
+        "branches": {
+            "hint": "เพิ่มสาขาร้าน — แต่ละสาขาจะมีคลังของตัวเองและเปิดกะแคชเชียร์ได้",
+            "label": "สาขา #{{index}}",
+            "add": "เพิ่มสาขา",
+            "remove": "ลบสาขา",
+            "outletCode": "รหัสสาขา",
+            "outletCodePlaceholder": "เช่น MAL",
+            "outletName": "ชื่อสาขา",
+            "outletNamePlaceholder": "เช่น มาลาบาร์ คาเฟ่",
+            "warehouseCode": "รหัสคลังสาขา",
+            "warehouseCodePlaceholder": "เช่น WH-MAL",
+            "warehouseName": "ชื่อคลังสาขา",
+            "warehouseNamePlaceholder": "เช่น คลังมาลาบาร์",
+            "address": "ที่อยู่ (ไม่บังคับ)",
+            "phone": "โทรศัพท์ (ไม่บังคับ)"
+        },
+        "account": {
+            "name": "ชื่อเต็ม",
+            "adminHint": "บัญชีนี้จะเป็น Super Admin — ใช้สำหรับเข้าสู่ระบบครั้งแรก",
+            "warehouseCode": "รหัสคลังหลัก",
+            "warehouseCodePlaceholder": "เช่น PUSAT",
+            "warehouseName": "ชื่อคลังหลัก"
+        },
+        "password": "รหัสผ่าน",
+        "passwordHint": "อย่างน้อย 8 ตัวอักษร",
+        "back": "กลับ",
+        "next": "ถัดไป",
+        "finish": "เสร็จสิ้นการตั้งค่า",
+        "completed": "ตั้งค่าเสร็จแล้ว! เข้าสู่ระบบด้วยบัญชีที่คุณสร้าง",
+        "required": "ส่วนนี้จำเป็นต้องกรอก",
+        "duplicateCode": "รหัสถูกใช้แล้ว"
+    },
+    "auth": {
+        "login": {
+            "title": "เข้าสู่ระบบ",
+            "subtitle": "ยินดีต้อนรับกลับ",
+            "description": "เข้าสู่ระบบเพื่อเข้าถึงแดชบอร์ด",
+            "appName": "แอปพลิเคชัน POS",
+            "email": "อีเมล",
+            "emailPlaceholder": "name@email.com",
+            "password": "รหัสผ่าน",
+            "passwordPlaceholder": "••••••••",
+            "remember": "จดจำฉัน",
+            "forgotPassword": "ลืมรหัสผ่าน?",
+            "submit": "เข้าสู่ระบบ",
+            "submitting": "กำลังดำเนินการ...",
+            "noAccount": "ยังไม่มีบัญชี?",
+            "registerNow": "ลงทะเบียนเลย",
+            "registerLink": "ลงทะเบียนเลย",
+            "heroTitle": "จัดการธุรกิจของคุณได้อย่างง่ายดาย",
+            "heroDescription": "ระบบขายหน้าร้านที่ทันสมัย ช่วยจัดการธุรกรรม สต็อก และรายงานการเงินได้อย่างมีประสิทธิภาพ",
+            "features": [
+                "ธุรกรรมรวดเร็ว",
+                "รายงานแบบเรียลไทม์",
+                "ผู้ใช้หลายคน"
+            ]
+        },
+        "register": {
+            "title": "ลงทะเบียน",
+            "subtitle": "สร้างบัญชีใหม่",
+            "name": "ชื่อเต็ม",
+            "email": "อีเมล",
+            "password": "รหัสผ่าน",
+            "confirmPassword": "ยืนยันรหัสผ่าน",
+            "submit": "สร้างบัญชี",
+            "submitting": "กำลังดำเนินการ...",
+            "hasAccount": "มีบัญชีอยู่แล้ว?",
+            "loginHere": "เข้าสู่ระบบที่นี่"
+        },
+        "forgotPassword": {
+            "title": "ลืมรหัสผ่าน",
+            "subtitle": "รีเซ็ตรหัสผ่านของคุณ",
+            "email": "อีเมล",
+            "submit": "ส่งลิงก์รีเซ็ต",
+            "submitting": "กำลังส่ง...",
+            "back": "กลับ",
+            "sentMessage": "ลิงก์รีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลของคุณแล้ว"
+        },
+        "hero": {
+            "title": "จัดการธุรกิจของคุณได้อย่างง่ายดาย",
+            "description": "ระบบ POS ครบวงจรสำหรับจัดการธุรกรรม สต็อก และรายงานยอดขายในที่เดียว",
+            "features": {
+                "fast": "รวดเร็วและง่าย",
+                "secure": "ปลอดภัยและเชื่อถือได้",
+                "complete": "ฟีเจอร์ครบครัน"
+            }
+        }
+    },
+    "sidebar": {
+        "sections": {
+            "overview": "ภาพรวม",
+            "masterData": "ข้อมูลหลัก",
+            "sales": "ยอดขาย",
+            "approval": "การอนุมัติ",
+            "inventory": "สินค้าคงคลัง",
+            "procurement": "จัดซื้อ",
+            "crmPricing": "CRM และราคา",
+            "reports": "รายงาน",
+            "dineIn": "ทานที่ร้าน",
+            "operations": "ปฏิบัติการและการควบคุม",
+            "userManagement": "จัดการผู้ใช้",
+            "settings": "ตั้งค่า"
+        },
+        "items": {
+            "dashboard": "แดชบอร์ด",
+            "categories": "หมวดหมู่",
+            "products": "สินค้า",
+            "customers": "ลูกค้า",
+            "suppliers": "ผู้จำหน่าย",
+            "transactions": "ธุรกรรม",
+            "transactionHistory": "ประวัติธุรกรรม",
+            "salesReturns": "การคืนสินค้าขาย",
+            "receivables": "ลูกหนี้",
+            "agingReminders": "อายุหนี้และการแจ้งเตือน",
+            "discountApproval": "อนุมัติส่วนลด",
+            "stockOpname": "ตรวจนับสต็อก",
+            "stockMutations": "การเคลื่อนไหวสต็อก",
+            "stockTransfers": "การโอนสต็อก",
+            "purchaseOrders": "ใบสั่งซื้อ",
+            "goodsReceiving": "รับสินค้า",
+            "supplierReturns": "การคืนผู้จำหน่าย",
+            "supplierPayables": "เจ้าหนี้ผู้จำหน่าย",
+            "members": "สมาชิก",
+            "pricePromos": "โปรโมชันราคา",
+            "customerVouchers": "คูปองลูกค้า",
+            "customerSegments": "เซ็กเมนต์ลูกค้า",
+            "crmCampaigns": "แคมเปญ CRM",
+            "crmReminders": "การแจ้งเตือน CRM",
+            "dineAreas": "โซนทานที่ร้าน",
+            "dineTables": "โต๊ะทานที่ร้าน",
+            "dineOrders": "ออเดอร์ทานที่ร้าน",
+            "salesReport": "รายงานยอดขาย",
+            "profitReport": "รายงานกำไร",
+            "advancedInsights": "ข้อมูลเชิงลึกขั้นสูง",
+            "cashierShifts": "กะแคชเชียร์",
+            "auditLogs": "บันทึกการตรวจสอบ",
+            "permissions": "สิทธิ์",
+            "roles": "กลุ่มสิทธิ์",
+            "users": "ผู้ใช้",
+            "usersList": "ข้อมูลผู้ใช้",
+            "usersCreate": "เพิ่มผู้ใช้",
+            "paymentGateway": "เกตเวย์ชำระเงิน",
+            "storeProfile": "โปรไฟล์ร้าน",
+            "bankAccounts": "บัญชีธนาคาร",
+            "loyalty": "สะสมแต้ม",
+            "salesTarget": "เป้าหมายยอดขาย",
+            "priceLists": "รายการราคา",
+            "warehouses": "คลังสินค้า / สาขา",
+            "units": "หน่วย",
+            "whatsApp": "WhatsApp"
+        },
+        "menu": {
+            "overview": "ภาพรวม",
+            "dashboard": "แดชบอร์ด",
+            "masterData": "ข้อมูลหลัก",
+            "categories": "หมวดหมู่",
+            "products": "สินค้า",
+            "customers": "ลูกค้า",
+            "suppliers": "ผู้จำหน่าย",
+            "sales": "ยอดขาย",
+            "transactions": "ธุรกรรม",
+            "transactionHistory": "ประวัติธุรกรรม",
+            "salesReturns": "การคืนสินค้าขาย",
+            "receivables": "ลูกหนี้",
+            "agingReminders": "อายุหนี้และการแจ้งเตือน",
+            "approval": "การอนุมัติ",
+            "discountApproval": "อนุมัติส่วนลด",
+            "inventory": "สินค้าคงคลัง",
+            "stockOpname": "ตรวจนับสต็อก",
+            "stockMutation": "การเคลื่อนไหวสต็อก",
+            "stockTransfer": "โอนสต็อก",
+            "procurement": "จัดซื้อ",
+            "purchaseOrders": "ใบสั่งซื้อ",
+            "goodsReceiving": "รับสินค้า",
+            "supplierReturns": "การคืนผู้จำหน่าย",
+            "payables": "เจ้าหนี้",
+            "crmPricing": "CRM และราคา",
+            "members": "สมาชิก",
+            "priceRules": "กฎการตั้งราคา",
+            "priceLists": "รายการราคา",
+            "vouchers": "คูปอง",
+            "customerSegments": "เซ็กเมนต์ลูกค้า",
+            "campaigns": "แคมเปญ CRM",
+            "reminders": "การแจ้งเตือน CRM",
+            "reports": "รายงาน",
+            "salesReport": "รายงานยอดขาย",
+            "profitReport": "รายงานกำไร",
+            "operations": "ปฏิบัติการ",
+            "cashierShifts": "กะแคชเชียร์",
+            "auditLogs": "บันทึกการตรวจสอบ",
+            "userManagement": "จัดการผู้ใช้",
+            "accessControl": "การควบคุมสิทธิ์",
+            "accessGroups": "กลุ่มสิทธิ์",
+            "users": "ผู้ใช้",
+            "userData": "ข้อมูลผู้ใช้",
+            "addUser": "เพิ่มผู้ใช้",
+            "settings": "ตั้งค่า",
+            "paymentGateway": "เกตเวย์ชำระเงิน",
+            "storeProfile": "โปรไฟล์ร้าน",
+            "bankAccounts": "บัญชีธนาคาร",
+            "loyalty": "สะสมแต้ม",
+            "salesTarget": "เป้าหมายยอดขาย",
+            "warehouses": "คลังสินค้า",
+            "outlets": "สาขา",
+            "whatsapp": "WhatsApp",
+            "printers": "เครื่องพิมพ์",
+            "taxSettings": "ภาษี"
+        }
+    },
+    "dashboard": {
+        "title": "แดชบอร์ด",
+        "welcome": "ยินดีต้อนรับ",
+        "widgets": {
+            "categories": "หมวดหมู่",
+            "products": "สินค้า",
+            "transactions": "ธุรกรรม",
+            "users": "ผู้ใช้",
+            "totalCategories": "หมวดหมู่ทั้งหมด",
+            "totalProducts": "สินค้าทั้งหมด",
+            "totalTransactions": "ธุรกรรมทั้งหมด",
+            "totalUsers": "ผู้ใช้ทั้งหมด"
+        }
+    },
+    "products": {
+        "title": "สินค้า",
+        "addProduct": "เพิ่มสินค้า",
+        "editProduct": "แก้ไขสินค้า",
+        "productList": "รายการสินค้า",
+        "barcode": "บาร์โค้ด",
+        "sku": "SKU",
+        "productName": "ชื่อสินค้า",
+        "category": "หมวดหมู่",
+        "buyPrice": "ราคาทุน",
+        "sellPrice": "ราคาขาย",
+        "stock": "สต็อก",
+        "image": "รูปภาพ",
+        "description": "รายละเอียด",
+        "unit": "หน่วย",
+        "buyPriceInput": "ราคาทุน (บาท)",
+        "sellPriceInput": "ราคาขาย (บาท)",
+        "stockInput": "สต็อก",
+        "minStock": "สต็อกขั้นต่ำ",
+        "maxStock": "สต็อกสูงสุด",
+        "taxType": "ประเภทภาษี",
+        "taxRate": "อัตราภาษี",
+        "taxInclusive": "รวมภาษี",
+        "taxExclusive": "ไม่รวมภาษี",
+        "isComposite": "สินค้าประกอบ",
+        "components": "ส่วนประกอบ",
+        "actions": {
+            "printBarcode": "พิมพ์บาร์โค้ด",
+            "printAllBarcode": "พิมพ์บาร์โค้ดทั้งหมด",
+            "exportProducts": "ส่งออกสินค้า",
+            "importProducts": "นำเข้าสินค้า"
+        },
+        "status": {
+            "inStock": "มีสต็อก",
+            "outOfStock": "สินค้าหมด",
+            "lowStock": "สต็อกต่ำ"
+        },
+        "empty": {
+            "title": "ยังไม่มีสินค้า",
+            "description": "เริ่มต้นด้วยการเพิ่มสินค้าชิ้นแรก"
+        }
+    },
+    "categories": {
+        "title": "หมวดหมู่",
+        "addCategory": "เพิ่มหมวดหมู่",
+        "editCategory": "แก้ไขหมวดหมู่",
+        "categoryName": "ชื่อหมวดหมู่",
+        "parentCategory": "หมวดหมู่หลัก",
+        "noParent": "ไม่มีหมวดหลัก",
+        "icon": "ไอคอน",
+        "image": "รูปภาพ"
+    },
+    "customers": {
+        "title": "ลูกค้า",
+        "addCustomer": "เพิ่มลูกค้า",
+        "editCustomer": "แก้ไขลูกค้า",
+        "customerName": "ชื่อลูกค้า",
+        "phone": "โทรศัพท์",
+        "email": "อีเมล",
+        "address": "ที่อยู่",
+        "province": "จังหวัด",
+        "city": "เมือง/อำเภอ",
+        "district": "เขต/ตำบล",
+        "village": "หมู่บ้าน",
+        "member": "สมาชิก",
+        "loyaltyPoints": "แต้มสะสม",
+        "loyaltyTier": "ระดับสมาชิก",
+        "tiers": {
+            "regular": "ปกติ",
+            "silver": "เงิน",
+            "gold": "ทอง",
+            "platinum": "แพลทินัม"
+        },
+        "history": "ประวัติธุรกรรม",
+        "segments": "เซ็กเมนต์"
+    },
+    "transactions": {
+        "title": "ธุรกรรม",
+        "pos": "POS",
+        "newTransaction": "ธุรกรรมใหม่",
+        "holdTransactions": "บิลที่พักไว้",
+        "addToCart": "เพิ่มลงตะกร้า",
+        "checkout": "ชำระเงิน",
+        "hold": "พักบิล",
+        "resume": "ดำเนินการต่อ",
+        "clearHold": "ล้างบิลพัก",
+        "cart": "ตะกร้า",
+        "cartEmpty": "ตะกร้าว่าง",
+        "selectProduct": "เลือกสินค้าที่จะเพิ่ม",
+        "selectCustomer": "เลือกลูกค้า",
+        "generalCustomer": "ทั่วไป (ไม่มีชื่อ)",
+        "paymentMethod": "วิธีชำระเงิน",
+        "paymentMethods": {
+            "cash": "เงินสด",
+            "bankTransfer": "โอนเงินผ่านธนาคาร",
+            "ewallet": "กระเป๋าเงินอิเล็กทรอนิกส์",
+            "qris": "QRIS",
+            "creditCard": "บัตรเครดิต",
+            "debitCard": "บัตรเดบิต",
+            "payLater": "จ่ายทีหลัง"
+        },
+        "cashInput": "จำนวนเงินสด",
+        "change": "เงินทอน",
+        "discount": "ส่วนลด",
+        "shippingCost": "ค่าจัดส่ง",
+        "subtotal": "ยอดรวมย่อย",
+        "tax": "ภาษี",
+        "total": "รวม",
+        "pay": "ชำระเงิน",
+        "printReceipt": "พิมพ์ใบเสร็จ",
+        "printInvoice": "พิมพ์ใบแจ้งหนี้",
+        "shareTransaction": "แชร์ธุรกรรม",
+        "holdLabel": "ป้ายบิลพัก",
+        "savedCart": "ธุรกรรมที่บันทึกไว้",
+        "noHeldCarts": "ไม่มีบิลพัก",
+        "searchProduct": "ค้นหาสินค้า (บาร์โค้ด/ชื่อ)...",
+        "productNotFound": "ไม่พบสินค้า",
+        "stockInsufficient": "สต็อกไม่เพียงพอ"
+    },
+    "receivables": {
+        "title": "ลูกหนี้",
+        "customerStatement": "ใบแจ้งยอดลูกค้า",
+        "remainingBalance": "ยอดคงเหลือ",
+        "originalAmount": "ยอดเดิม",
+        "amountPaid": "ยอดที่ชำระแล้ว",
+        "overdueDays": "วันค้างชำระ",
+        "paymentHistory": "ประวัติการชำระเงิน",
+        "recordPayment": "บันทึกการชำระเงิน",
+        "payAmount": "จำนวนเงินที่ชำระ",
+        "collectionNotes": "บันทึกการเก็บเงิน",
+        "agingBuckets": {
+            "current": "0-30 วัน",
+            "days31to60": "31-60 วัน",
+            "days61to90": "61-90 วัน",
+            "over90": "มากกว่า 90 วัน"
+        }
+    },
+    "salesReturns": {
+        "title": "การคืนสินค้าขาย",
+        "createReturn": "สร้างใบคืน",
+        "returnReason": "เหตุผลการคืน",
+        "returnQty": "จำนวนที่คืน",
+        "refundMethod": "วิธีคืนเงิน",
+        "refundAmount": "จำนวนเงินคืน",
+        "exchangeItem": "แลกเปลี่ยนสินค้า",
+        "cashRefund": "คืนเงินสด",
+        "storeCredit": "เครดิตร้าน"
+    },
+    "cashierShifts": {
+        "title": "กะแคชเชียร์",
+        "openShift": "เปิดกะ",
+        "closeShift": "ปิดกะ",
+        "forceClose": "บังคับปิด",
+        "shiftSummary": "สรุปกะ",
+        "openingBalance": "ยอดเปิด",
+        "closingBalance": "ยอดปิด",
+        "expectedCash": "เงินสดที่คาดหวัง",
+        "difference": "ส่วนต่าง",
+        "totalSales": "ยอดขายรวม",
+        "totalCash": "เงินสดรวม",
+        "totalNonCash": "ยอดไม่ใช่เงินสดรวม",
+        "totalRefund": "คืนเงินรวม",
+        "selectWarehouse": "เลือกคลัง"
+    },
+    "stock": {
+        "opname": {
+            "title": "ตรวจนับสต็อก",
+            "create": "สร้างการตรวจนับสต็อก",
+            "finalize": "สรุปยอด",
+            "systemStock": "สต็อกระบบ",
+            "actualStock": "สต็อกจริง",
+            "difference": "ส่วนต่าง",
+            "adjustmentReason": "เหตุผลการปรับปรุง"
+        },
+        "mutation": {
+            "title": "การเคลื่อนไหวสต็อก",
+            "mutationType": "ประเภทการเคลื่อนไหว",
+            "in": "เข้า",
+            "out": "ออก",
+            "adjustment": "การปรับปรุง",
+            "source": "แหล่งที่มา",
+            "reference": "อ้างอิง"
+        },
+        "transfer": {
+            "title": "โอนสต็อก",
+            "create": "สร้างการโอนย้าย",
+            "send": "ส่ง",
+            "receive": "รับ",
+            "cancel": "ยกเลิก",
+            "fromWarehouse": "จากคลัง",
+            "toWarehouse": "ไปยังคลัง",
+            "status": {
+                "draft": "ร่าง",
+                "sent": "ส่งแล้ว",
+                "received": "รับแล้ว",
+                "cancelled": "ยกเลิกแล้ว"
+            }
+        }
+    },
+    "purchaseOrders": {
+        "title": "ใบสั่งซื้อ",
+        "createPO": "สร้างใบสั่งซื้อ",
+        "placeOrder": "สั่งซื้อ",
+        "cancel": "ยกเลิก",
+        "supplier": "ผู้จำหน่าย",
+        "orderDate": "วันที่สั่งซื้อ",
+        "expectedDate": "วันที่คาดการณ์",
+        "items": "รายการ",
+        "qty": "จำนวน",
+        "unitPrice": "ราคาต่อหน่วย",
+        "status": {
+            "draft": "ร่าง",
+            "ordered": "สั่งแล้ว",
+            "partial": "ชำระบางส่วน",
+            "completed": "เสร็จสมบูรณ์",
+            "cancelled": "ยกเลิกแล้ว"
+        }
+    },
+    "goodsReceivings": {
+        "title": "รับสินค้า",
+        "createGR": "สร้างใบรับสินค้า",
+        "purchaseOrder": "ใบสั่งซื้อ",
+        "receiveItems": "รับสินค้า",
+        "batchNumber": "หมายเลขล็อต",
+        "expiredDate": "วันหมดอายุ"
+    },
+    "supplierReturns": {
+        "title": "การคืนผู้จำหน่าย",
+        "createReturn": "สร้างใบคืน",
+        "complete": "เสร็จสิ้น",
+        "reason": "เหตุผลการคืน"
+    },
+    "payables": {
+        "title": "เจ้าหนี้",
+        "supplierStatement": "ใบแจ้งยอดผู้จำหน่าย",
+        "recordPayment": "บันทึกการชำระเงิน"
+    },
+    "pricingRules": {
+        "title": "กฎการตั้งราคา",
+        "createRule": "สร้างกฎ",
+        "ruleName": "ชื่อกฎ",
+        "ruleType": "ประเภทกฎ",
+        "discountType": "ประเภทส่วนลด",
+        "discountValue": "มูลค่าส่วนลด",
+        "targetType": "เป้าหมาย",
+        "targetProduct": "สินค้าเฉพาะ",
+        "targetCategory": "หมวดหมู่",
+        "targetAll": "สินค้าทั้งหมด",
+        "customerScope": "ขอบเขตลูกค้า",
+        "scopeAll": "ลูกค้าทั้งหมด",
+        "scopeWalkIn": "ลูกค้าทั่วไป",
+        "scopeRegistered": "ลงทะเบียนแล้ว",
+        "scopeMember": "สมาชิก",
+        "startDate": "วันเริ่มต้น",
+        "endDate": "วันสิ้นสุด",
+        "priority": "ลำดับความสำคัญ",
+        "isActive": "ใช้งาน",
+        "types": {
+            "standardDiscount": "ส่วนลดมาตรฐาน",
+            "qtyBreak": "ขายส่ง (แยกจำนวน)",
+            "bundlePrice": "ราคาชุด",
+            "buyXGetY": "ซื้อ X แถม Y"
+        },
+        "preview": "ดูตัวอย่าง"
+    },
+    "priceLists": {
+        "title": "รายการราคา",
+        "createList": "สร้างรายการราคา",
+        "listName": "ชื่อรายการ",
+        "customerScope": "ขอบเขตลูกค้า",
+        "products": "สินค้า",
+        "addProducts": "เพิ่มสินค้า",
+        "specialPrice": "ราคาพิเศษ"
+    },
+    "vouchers": {
+        "title": "คูปอง",
+        "createVoucher": "สร้างคูปอง",
+        "voucherCode": "รหัสคูปอง",
+        "voucherName": "ชื่อคูปอง",
+        "discountType": "ประเภทส่วนลด",
+        "discountValue": "มูลค่าส่วนลด",
+        "minPurchase": "ยอดซื้อขั้นต่ำ",
+        "maxDiscount": "ส่วนลดสูงสุด",
+        "usageLimit": "จำกัดการใช้งาน",
+        "usedCount": "จำนวนที่ใช้แล้ว",
+        "validFrom": "ใช้ได้ตั้งแต่",
+        "validUntil": "ใช้ได้ถึง",
+        "status": {
+            "active": "ใช้งาน",
+            "expired": "หมดอายุ",
+            "usedUp": "ใช้หมดแล้ว"
+        }
+    },
+    "segments": {
+        "title": "เซ็กเมนต์ลูกค้า",
+        "createSegment": "สร้างเซ็กเมนต์",
+        "segmentName": "ชื่อเซ็กเมนต์",
+        "segmentType": "ประเภทเซ็กเมนต์",
+        "typeManual": "ด้วยตนเอง",
+        "typeAuto": "อัตโนมัติ",
+        "members": "สมาชิก",
+        "addMembers": "เพิ่มสมาชิก",
+        "criteria": "เงื่อนไข"
+    },
+    "campaigns": {
+        "title": "แคมเปญ CRM",
+        "createCampaign": "สร้างแคมเปญ",
+        "campaignName": "ชื่อแคมเปญ",
+        "campaignType": "ประเภทแคมเปญ",
+        "targetSegment": "เซ็กเมนต์เป้าหมาย",
+        "message": "ข้อความ",
+        "schedule": "กำหนดเวลา",
+        "process": "ดำเนินการ",
+        "cancel": "ยกเลิก",
+        "types": {
+            "reminder": "การแจ้งเตือน",
+            "promo": "โปรโมชัน",
+            "broadcast": "บรอดคาสต์"
+        },
+        "status": {
+            "draft": "ร่าง",
+            "scheduled": "กำหนดเวลาแล้ว",
+            "processing": "กำลังดำเนินการ",
+            "completed": "เสร็จสมบูรณ์",
+            "cancelled": "ยกเลิกแล้ว"
+        }
+    },
+    "discountApprovals": {
+        "title": "การอนุมัติส่วนลด",
+        "pending": "รออนุมัติ",
+        "approve": "อนุมัติ",
+        "deny": "ปฏิเสธ",
+        "requestedBy": "ผู้ขอ",
+        "requestedAt": "เวลาที่ขอ",
+        "discountAmount": "จำนวนส่วนลด",
+        "transaction": "ธุรกรรม",
+        "noPending": "ไม่มีคำขอรอดำเนินการ"
+    },
+    "settings": {
+        "title": "ตั้งค่า",
+        "storeProfile": {
+            "title": "โปรไฟล์ร้าน",
+            "storeName": "ชื่อร้าน",
+            "storeAddress": "ที่อยู่",
+            "storePhone": "โทรศัพท์",
+            "storeEmail": "อีเมล",
+            "storeWebsite": "เว็บไซต์",
+            "storeCity": "เมือง/อำเภอ",
+            "storeLogo": "โลโก้ร้าน",
+            "npwp": "NPWP",
+            "nib": "NIB"
+        },
+        "payment": {
+            "title": "ตั้งค่าการชำระเงิน",
+            "defaultGateway": "เกตเวย์เริ่มต้น",
+            "midtrans": {
+                "title": "Midtrans",
+                "serverKey": "คีย์เซิร์ฟเวอร์",
+                "clientKey": "คีย์ไคลเอนต์",
+                "mode": "โหมด"
+            },
+            "xendit": {
+                "title": "Xendit",
+                "secretKey": "คีย์ลับ",
+                "publicKey": "คีย์สาธารณะ",
+                "callbackToken": "โทเค็น Callback",
+                "mode": "โหมด"
+            }
+        },
+        "bankAccounts": {
+            "title": "บัญชีธนาคาร",
+            "addAccount": "เพิ่มบัญชี",
+            "bankName": "ชื่อธนาคาร",
+            "accountNumber": "เลขที่บัญชี",
+            "accountName": "ชื่อบัญชี",
+            "isActive": "ใช้งาน"
+        },
+        "printer": {
+            "title": "ตั้งค่าเครื่องพิมพ์",
+            "paperSize": "ขนาดกระดาษ",
+            "paperSizes": {
+                "80mm": "80 มม.",
+                "58mm": "58 มม."
+            },
+            "autoPrint": "พิมพ์อัตโนมัติ",
+            "charset": "ชุดอักขระ"
+        },
+        "loyalty": {
+            "title": "ตั้งค่าสะสมแต้ม",
+            "enabled": "เปิดใช้งานสะสมแต้ม",
+            "pointsPerRupiah": "แต้มต่อ 1,000 บาท",
+            "pointsToRupiah": "มูลค่าแต้ม",
+            "tiers": {
+                "title": "ระดับสมาชิก",
+                "regular": "ปกติ",
+                "silver": "เงิน",
+                "gold": "ทอง",
+                "platinum": "แพลทินัม"
+            }
+        },
+        "target": {
+            "title": "เป้าหมายยอดขาย",
+            "monthlyTarget": "เป้าหมายรายเดือน",
+            "currentProgress": "ความคืบหน้าปัจจุบัน"
+        },
+        "warehouse": {
+            "title": "คลังสินค้า",
+            "warehouseCode": "รหัสคลัง",
+            "warehouseName": "ชื่อคลัง",
+            "isMain": "คลังหลัก",
+            "warehouseType": "ประเภท",
+            "types": {
+                "main": "คลังหลัก",
+                "branch": "สาขา",
+                "stock": "คลังสต็อก"
+            }
+        },
+        "whatsapp": {
+            "title": "WhatsApp",
+            "serviceUrl": "URL บริการ",
+            "enabled": "เปิดใช้งาน",
+            "autoSend": "ส่งอัตโนมัติ",
+            "connect": "เชื่อมต่อ",
+            "disconnect": "ตัดการเชื่อมต่อ",
+            "scanQR": "สแกนคิวอาร์โค้ด",
+            "status": {
+                "connected": "เชื่อมต่อแล้ว",
+                "disconnected": "ตัดการเชื่อมต่อแล้ว",
+                "connecting": "กำลังเชื่อมต่อ..."
+            }
+        }
+    },
+    "reports": {
+        "title": "รายงาน",
+        "sales": {
+            "title": "รายงานยอดขาย",
+            "period": "ช่วงเวลา",
+            "today": "วันนี้",
+            "thisWeek": "สัปดาห์นี้",
+            "thisMonth": "เดือนนี้",
+            "thisYear": "ปีนี้",
+            "custom": "กำหนดเอง",
+            "startDate": "วันเริ่มต้น",
+            "endDate": "วันสิ้นสุด",
+            "totalSales": "ยอดขายรวม",
+            "totalTransactions": "ธุรกรรมทั้งหมด",
+            "averageTransaction": "ยอดเฉลี่ยต่อบิล",
+            "topProducts": "สินค้าขายดี",
+            "salesByCategory": "ยอดขายตามหมวดหมู่",
+            "salesByPayment": "ยอดขายตามวิธีชำระเงิน"
+        },
+        "profit": {
+            "title": "รายงานกำไร",
+            "totalRevenue": "รายได้รวม",
+            "totalCost": "ต้นทุนรวม",
+            "totalProfit": "กำไรรวม",
+            "profitMargin": "อัตรากำไร",
+            "profitByProduct": "กำไรตามสินค้า",
+            "profitByCategory": "กำไรตามหมวดหมู่"
+        },
+        "insights": {
+            "title": "ข้อมูลเชิงลึกยอดขายขั้นสูง",
+            "hourlySales": "ยอดขายตามชั่วโมง",
+            "cashierPerformance": "ผลงานแคชเชียร์",
+            "repeatCustomers": "ลูกค้าประจำ",
+            "productTrends": "เทรนด์สินค้า",
+            "lowPerformers": "ผลงานต่ำ"
+        }
+    },
+    "auditLogs": {
+        "title": "บันทึกการตรวจสอบ",
+        "event": "เหตุการณ์",
+        "user": "ผู้ใช้",
+        "module": "โมดูล",
+        "description": "รายละเอียด",
+        "before": "ก่อน",
+        "after": "หลัง",
+        "ipAddress": "ที่อยู่ IP",
+        "userAgent": "User Agent"
+    },
+    "users": {
+        "title": "ผู้ใช้",
+        "addUser": "เพิ่มผู้ใช้",
+        "editUser": "แก้ไขผู้ใช้",
+        "userName": "ชื่อ",
+        "userEmail": "อีเมล",
+        "userRole": "บทบาท",
+        "userStatus": "สถานะ",
+        "changePassword": "เปลี่ยนรหัสผ่าน",
+        "newPassword": "รหัสผ่านใหม่",
+        "confirmPassword": "ยืนยันรหัสผ่าน"
+    },
+    "roles": {
+        "title": "บทบาท",
+        "addRole": "เพิ่มบทบาท",
+        "editRole": "แก้ไขบทบาท",
+        "roleName": "ชื่อบทบาท",
+        "permissions": "สิทธิ์"
+    },
+    "pdf": {
+        "invoice": "ใบแจ้งหนี้",
+        "receipt": "ใบเสร็จ",
+        "shippingLabel": "ป้ายจัดส่ง",
+        "printDocument": "พิมพ์เอกสาร"
+    },
+    "whatsapp": {
+        "sendTest": "ส่งทดสอบ",
+        "messageSent": "ส่งข้อความแล้ว",
+        "messageFailed": "ส่งข้อความไม่สำเร็จ"
+    },
+    "language": {
+        "title": "ภาษา",
+        "switch": "เปลี่ยนภาษา",
+        "current": "ภาษาปัจจุบัน",
+        "indonesia": "อินโดนีเซีย",
+        "english": "English",
+        "thai": "ไทย"
+    },
+    "tour": {
+        "button": "ทัวร์แนะนำ",
+        "reset": "เล่นทัวร์แนะนำอีกครั้ง",
+        "dashboard": {
+            "title": "หน้าแดชบอร์ด",
+            "desc": "นี่คือศูนย์สรุปธุรกิจของคุณ มาดูรอบๆ กันสักครู่",
+            "stats": {
+                "title": "การ์ดสถิติ",
+                "desc": "ยอดขายวันนี้ กำไร เป้าหมายรายเดือน และจำนวนธุรกรรม"
+            },
+            "chart": {
+                "title": "แนวโน้มรายได้",
+                "desc": "แผนภูมิรายได้ 12 ช่วงล่าสุด"
+            },
+            "widgets": {
+                "title": "วิดเจ็ตติดตาม",
+                "desc": "กะแคชเชียร์ที่เปิดอยู่ ลูกหนี้ เจ้าหนี้ และออเดอร์นั่งกินที่ต้องดูแล"
+            },
+            "recent": {
+                "title": "ธุรกรรมล่าสุด",
+                "desc": "ห้าธุรกรรมล่าสุด"
+            },
+            "lowstock": {
+                "title": "สต็อกต่ำ",
+                "desc": "สินค้าต่ำกว่าเกณฑ์สต็อกปลอดภัย — สั่งซื้อเพิ่มเร็วๆ นี้"
+            }
+        },
+        "pos": {
+            "search": {
+                "title": "ค้นหาสินค้า",
+                "desc": "ค้นหาสินค้าตามชื่อหรือสแกนบาร์โค้ดที่นี่ กด / เพื่อโฟกัสอย่างรวดเร็ว"
+            },
+            "products": {
+                "title": "รายการสินค้า",
+                "desc": "คลิกสินค้าเพื่อเพิ่มลงตะกร้า มีตัวกรองหมวดหมู่ด้านบน"
+            },
+            "customer": {
+                "title": "เลือกลูกค้า",
+                "desc": "ไม่บังคับ — เลือกลูกค้าเพื่อแต้มสะสม คูปอง และการติดตามเครดิต"
+            },
+            "cart": {
+                "title": "ตะกร้า",
+                "desc": "ปรับจำนวนรายการที่นี่ กดพักบิลเพื่อหยุดธุรกรรมชั่วคราว"
+            },
+            "payment": {
+                "title": "การชำระเงิน",
+                "desc": "เลือกวิธีชำระเงิน กำหนดจำนวน แล้วทำธุรกรรมให้เสร็จ"
+            }
+        },
+        "products": {
+            "header": {
+                "title": "หน้าสินค้า",
+                "desc": "จัดการสินค้าทุกรายการของร้านจากที่นี่"
+            },
+            "actions": {
+                "title": "การดำเนินการสินค้า",
+                "desc": "พิมพ์บาร์โค้ดจำนวนมาก ส่งออก/นำเข้าสินค้า และเพิ่มสินค้าใหม่"
+            },
+            "search": {
+                "title": "ค้นหา",
+                "desc": "ค้นหาสินค้าตามชื่อ SKU หรือบาร์โค้ด"
+            },
+            "view": {
+                "title": "โหมดการดู",
+                "desc": "สลับระหว่างมุมมองตารางและตารางรายการตามที่สะดวก"
+            },
+            "list": {
+                "title": "รายการสินค้า",
+                "desc": "คลิกสินค้าเพื่อดูรายละเอียด แก้ไข หรือจัดการสต็อกตามคลัง"
+            }
+        },
+        "shifts": {
+            "header": {
+                "title": "กะแคชเชียร์",
+                "desc": "ต้องเปิดกะก่อนแคชเชียร์จึงจะทำธุรกรรม POS ได้"
+            },
+            "open": {
+                "title": "เปิดกะ",
+                "desc": "ใส่เงินเปิดลิ้นชักและเลือกคลัง แล้วเปิดกะเพื่อเริ่มขาย"
+            },
+            "active": {
+                "title": "สรุปกะที่เปิดอยู่",
+                "desc": "เงินเปิดลิ้นชัก เงินสดที่คาดหวัง และจำนวนธุรกรรมที่ดำเนินอยู่"
+            },
+            "filters": {
+                "title": "ตัวกรองประวัติ",
+                "desc": "กรองประวัติกะตามแคชเชียร์ สถานะ และช่วงวันที่"
+            },
+            "history": {
+                "title": "ประวัติกะ",
+                "desc": "ตรวจสอบกะที่ปิดแล้ว รวมส่วนต่างเงินสดตอนปิดกะ"
+            }
+        },
+        "reports": {
+            "header": {
+                "title": "หน้ารายงาน",
+                "desc": "วิเคราะห์ผลการดำเนินงานตามช่วงเวลาและตัวกรอง"
+            },
+            "summary": {
+                "title": "การ์ดสรุป",
+                "desc": "ตัวชี้วัดสำคัญในช่วงที่เลือก — รายได้ กำไร และอื่นๆ"
+            },
+            "filters": {
+                "title": "ตัวกรองรายงาน",
+                "desc": "กรองข้อมูลตามวันที่ ใบแจ้งหนี้ แคชเชียร์ หรือลูกค้า"
+            },
+            "table": {
+                "title": "ข้อมูลรายงาน",
+                "desc": "รายละเอียด/รายการแยกต่อธุรกรรม นำทางหน้าด้านล่าง"
+            }
+        }
+    },
+    "setupChecklist": {
+        "title": "รายการตั้งค่าร้าน",
+        "subtitle": "เสร็จแล้ว :done จาก :total ขั้นตอน — ทำครบเพื่อเริ่มขาย",
+        "items": {
+            "store_profile": "กรอกโปรไฟล์ร้านให้ครบ",
+            "category": "สร้างหมวดหมู่แรกของคุณ",
+            "product": "เพิ่มสินค้าชิ้นแรกของคุณ",
+            "customer": "ลงทะเบียนลูกค้าคนแรก",
+            "transaction": "ทำธุรกรรมแรกให้เสร็จ"
+        }
+    },
+    "warehouse": {
+        "floor": {
+            "title": "พื้นสต็อก",
+            "subtitle": "รับเข้า (+) / ตัดออก (−) — ติดตามน้ำหนักแบบ Spoolman",
+            "cut": "ตัดออก",
+            "receive": "รับเข้า",
+            "searchPlaceholder": "ค้นหารหัสหน่วย / SKU…",
+            "emptyUnits": "ยังไม่มีหน่วยที่ใช้งานในคลังนี้",
+            "selectUnit": "เลือกหน่วยจากรายการทางซ้าย",
+            "remaining": "คงเหลือ",
+            "amount": "จำนวน",
+            "confirmCut": "ยืนยันตัดออก",
+            "confirmReceive": "ยืนยันรับเข้า",
+            "product": "สินค้า",
+            "selectSku": "เลือก SKU…",
+            "qtyWeight": "จำนวน / น้ำหนัก",
+            "unitCodeOptional": "รหัสหน่วย (ไม่บังคับ)",
+            "lotOptional": "ล็อต (ไม่บังคับ)"
+        },
+        "overview": {
+            "title": "ภาพรวมคลัง",
+            "subtitleAdmin": "ทุกคลัง — น้ำหนักสต็อกและการเคลื่อนไหว",
+            "subtitleUser": "สรุปสต็อกคลังของคุณ",
+            "openFloor": "เปิดพื้นสต็อก",
+            "activeUnits": "หน่วยที่ใช้งาน",
+            "skus": "SKU",
+            "totalWeight": "น้ำหนักรวม",
+            "ledgerQty": "จำนวนในบัญชี",
+            "todayMoves": "เคลื่อนไหววันนี้",
+            "openFloorLink": "เปิดพื้นสต็อก",
+            "recentMovements": "การเคลื่อนไหวล่าสุด",
+            "when": "เมื่อ",
+            "type": "ประเภท",
+            "sku": "SKU",
+            "warehouse": "คลัง",
+            "unit": "หน่วย",
+            "qty": "จำนวน",
+            "weight": "น้ำหนัก",
+            "operator": "ผู้ทำรายการ",
+            "emptyMovements": "ยังไม่มีการเคลื่อนไหว — ใช้พื้นสต็อกเพื่อรับเข้าหรือตัดออก"
+        },
+        "menu": {
+            "stockFloor": "หน้างานคลัง (รับ / ตัด)",
+            "labels": "ป้ายหน่วย / ม้วน",
+            "sections": {
+                "overview": "ภาพรวมคลัง",
+                "materials": "วัตถุดิบ (RM)",
+                "inbound": "รับเข้า / จัดซื้อ",
+                "stock": "สต็อกคลัง",
+                "system": "ระบบ"
+            },
+            "dashboard": "แดชบอร์ดคลัง",
+            "materials": "รายการวัตถุดิบ",
+            "materialGroups": "กลุ่มวัตถุดิบ",
+            "units": "หน่วยนับ",
+            "suppliers": "ผู้จำหน่าย",
+            "purchaseOrders": "ใบสั่งซื้อ (PO)",
+            "goodsReceiving": "รับวัตถุดิบเข้าคลัง",
+            "supplierReturns": "คืนผู้จำหน่าย",
+            "stockMovements": "ความเคลื่อนไหวสต็อก",
+            "stockTransfers": "โอนย้ายระหว่างคลัง",
+            "stockCount": "ตรวจนับสต็อก",
+            "warehouses": "คลัง",
+            "company": "ข้อมูลบริษัท",
+            "users": "ผู้ใช้",
+            "roles": "กลุ่มสิทธิ์",
+            "permissions": "สิทธิ์",
+            "auditLogs": "บันทึกการตรวจสอบ"
+        },
+        "labels": {
+            "title": "ป้ายหน่วย (Label)",
+            "subtitle": "สร้างและพิมพ์ป้ายบาร์โค้ดสำหรับหน่วยบนพื้นคลัง",
+            "printSelected": "พิมพ์ป้ายที่เลือก",
+            "printTitle": "พิมพ์ป้ายหน่วย",
+            "allWarehouses": "ทุกคลัง",
+            "search": "ค้นหารหัสหน่วย / SKU…",
+            "empty": "ไม่พบหน่วย — รับเข้าที่ POS ก่อน"
+        },
+        "pos": {
+            "brand": "เครื่อง POS คลัง",
+            "loginTitle": "เข้าเครื่อง POS",
+            "loginDescription": "ล็อกอินแล้วเปิดหน้าตัด/รับสต็อกทันที",
+            "unlockHint": "ใส่รหัสตัวเลขของโกดังเพื่อเข้าเครื่อง POS",
+            "warehouses": "โกดัง",
+            "operatorName": "ชื่อผู้ตัด / ผู้รับ",
+            "operatorPlaceholder": "เช่น สมชาย",
+            "operatorRequired": "กรุณาใส่ชื่อผู้ทำรายการก่อนตัดหรือรับเข้า",
+            "lock": "ล็อก",
+            "invalidPin": "รหัสไม่ถูกต้อง",
+            "adminHint": "แอดมินเข้าดูภาพรวมได้ที่ /login (รหัส 9999)",
+            "scan": "สแกน",
+            "manualId": "รหัส",
+            "scanAim": "เล็งไปที่บาร์โค้ด / QR",
+            "scanNotFound": "ไม่พบรหัสที่สแกน",
+            "scanFailed": "สแกนไม่สำเร็จ",
+            "printLabel": "พิมพ์ป้าย"
+        },
+        "language": {
+            "thai": "ไทย"
+        }
+    },
+    "stockLedger": {
+        "title": "ความเคลื่อนไหวสต็อก",
+        "subtitle": "ทุกรายการรับเข้า ตัด โอนย้าย ตรวจนับ และคืนผู้จำหน่าย จากสมุดบัญชีสต็อก (ledger)",
+        "tableTitle": "ประวัติความเคลื่อนไหว",
+        "empty": "ยังไม่มีความเคลื่อนไหวตามเงื่อนไขนี้",
+        "filters": {
+            "allWarehouses": "ทุกคลัง",
+            "allMaterials": "วัตถุดิบทั้งหมด",
+            "allTypes": "ทุกประเภท",
+            "dateFrom": "ตั้งแต่วันที่",
+            "dateTo": "ถึงวันที่",
+            "search": "ค้นหา รหัสหน่วย / เอกสาร / ผู้ทำ"
+        },
+        "totals": {
+            "in": "รับเข้ารวม",
+            "out": "จ่ายออกรวม",
+            "rows": "จำนวนรายการ"
+        },
+        "columns": {
+            "time": "เวลา",
+            "material": "วัตถุดิบ / หน่วย",
+            "warehouse": "คลัง",
+            "type": "ประเภท",
+            "qty": "จำนวน",
+            "balance": "คงเหลือหลังรายการ",
+            "reference": "ที่มา",
+            "by": "ผู้ทำรายการ"
+        },
+        "types": {
+            "RECEIVE": "รับเข้า",
+            "ISSUE": "จ่ายออก",
+            "CONSUMPTION": "ใช้ไป (Spoolman)",
+            "TRANSFER_IN": "โอนเข้า",
+            "TRANSFER_OUT": "โอนออก",
+            "ADJUSTMENT": "ปรับปรุง",
+            "COUNT": "ปรับจากการนับ"
+        },
+        "references": {
+            "goods_receiving": "รับเข้าจาก PO (GR)",
+            "stock_transfer": "โอนย้ายระหว่างคลัง",
+            "stock_transfer_cancel": "ยกเลิกใบโอน",
+            "stock_opname": "ตรวจนับสต็อก",
+            "supplier_return": "คืนผู้จำหน่าย",
+            "product_create": "สต็อกเริ่มต้น",
+            "stock_rm_opening": "ยอดยกมา",
+            "warehouse_floor_receive": "หน้างาน: รับเข้า",
+            "warehouse_floor_cut": "หน้างาน: ตัด",
+            "spoolman_consumption_event": "Spoolman"
+        }
+    }
+}

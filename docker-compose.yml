@@ -1,0 +1,74 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: production-pos-mysql
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+      MYSQL_DATABASE: point_of_sales
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${MYSQL_ROOT_PASSWORD:-secret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - wms-internal
+
+  spoolman:
+    image: ghcr.io/donkie/spoolman:latest
+    container_name: production-pos-spoolman
+    restart: unless-stopped
+    expose:
+      - "7912"
+    environment:
+      - SPOOLMAN_PORT=7912
+    volumes:
+      - spoolman-data:/home/app/.local/share/spoolman
+    networks:
+      - wms-internal
+
+  # Docker Desktop on Windows often resets direct Spoolman publish; gateway keeps host↔Spoolman working.
+  spoolman-gateway:
+    image: alpine/socat:1.8.0.0
+    container_name: production-pos-spoolman-gateway
+    restart: unless-stopped
+    depends_on:
+      - spoolman
+    command: TCP-LISTEN:7912,fork,reuseaddr TCP:spoolman:7912
+    ports:
+      - "127.0.0.1:17912:7912"
+    networks:
+      - wms-internal
+
+  https-proxy:
+    image: caddy:2.10-alpine
+    container_name: production-pos-https
+    restart: unless-stopped
+    environment:
+      WMS_LAN_IP: ${WMS_LAN_IP:-192.168.1.85}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/srv/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - wms-internal
+
+volumes:
+  mysql-data:
+  spoolman-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  wms-internal:
+    driver: bridge
