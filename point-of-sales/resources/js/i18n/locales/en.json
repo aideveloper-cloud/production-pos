@@ -1161,5 +1161,14 @@
             "warehouse_floor_cut": "Floor: cut",
             "spoolman_consumption_event": "Spoolman"
         }
+    },
+    "exportMenu": {
+        "button": "Export",
+        "excel": "Excel (.xlsx)",
+        "csv": "CSV (.csv)",
+        "units": "Export units",
+        "balances": "Export balances",
+        "materials": "Export materials",
+        "movements": "Export movements"
     }
 }

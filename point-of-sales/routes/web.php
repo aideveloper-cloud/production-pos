@@ -27,6 +27,7 @@ use App\Http\Controllers\Apps\ReceivableController;
 use App\Http\Controllers\Apps\SalesReturnController;
 use App\Http\Controllers\Apps\SettingController;
 use App\Http\Controllers\Apps\StockLedgerController;
+use App\Http\Controllers\Apps\WarehouseExportController;
 use App\Http\Controllers\Apps\StockMutationController;
 use App\Http\Controllers\Apps\StockOpnameController;
 use App\Http\Controllers\Apps\StockTransferController;
@@ -174,6 +175,13 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
 
     // import/export
     Route::get('/export/products', [ImportExportController::class, 'exportProducts'])->middleware('permission:products-export')->name('export.products');
+    // Warehouse (RM) exports — admin only; ?format=csv for CSV, Excel otherwise
+    Route::middleware('permission:products-export')->prefix('export/warehouse')->name('export.warehouse.')->group(function () {
+        Route::get('/materials', [WarehouseExportController::class, 'materials'])->name('materials');
+        Route::get('/units', [WarehouseExportController::class, 'units'])->name('units');
+        Route::get('/balances', [WarehouseExportController::class, 'balances'])->name('balances');
+        Route::get('/stock-ledgers', [WarehouseExportController::class, 'stockLedgers'])->name('stock-ledgers');
+    });
     Route::get('/export/customers', [ImportExportController::class, 'exportCustomers'])->middleware('permission:customers-export')->name('export.customers');
     Route::get('/export/transactions', [ImportExportController::class, 'exportTransactions'])->middleware('permission:transactions-access')->name('export.transactions');
     Route::post('/import/products', [ImportExportController::class, 'importProducts'])->middleware('permission:products-import')->name('import.products');

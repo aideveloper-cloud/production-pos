@@ -1100,5 +1100,14 @@
             "warehouse_floor_cut": "Lantai: potong",
             "spoolman_consumption_event": "Spoolman"
         }
+    },
+    "exportMenu": {
+        "button": "Ekspor",
+        "excel": "Excel (.xlsx)",
+        "csv": "CSV (.csv)",
+        "units": "Ekspor unit",
+        "balances": "Ekspor saldo stok",
+        "materials": "Ekspor bahan",
+        "movements": "Ekspor mutasi"
     }
 }

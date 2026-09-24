@@ -4,6 +4,8 @@ import { Head, router } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import Table from "@/Components/Dashboard/Table";
 import Pagination from "@/Components/Dashboard/Pagination";
+import ExportMenu from "@/Components/Dashboard/ExportMenu";
+import hasAnyPermission from "@/Utils/Permission";
 import { IconArrowDownRight, IconArrowUpRight, IconHistory, IconSearch } from "@tabler/icons-react";
 
 const inputClass =
@@ -47,9 +49,17 @@ export default function Index({ ledgers, totals, filters, warehouses = [], produ
         <>
             <Head title={t("stockLedger.title")} />
 
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("stockLedger.title")}</h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{t("stockLedger.subtitle")}</p>
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("stockLedger.title")}</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{t("stockLedger.subtitle")}</p>
+                </div>
+                {hasAnyPermission(["products-export"]) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <ExportMenu routeName="export.warehouse.stock-ledgers" params={filters} label={t("exportMenu.movements")} />
+                        <ExportMenu routeName="export.warehouse.balances" params={{ warehouse_id: filters.warehouse_id }} label={t("exportMenu.balances")} />
+                    </div>
+                )}
             </div>
 
             <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3 xl:grid-cols-6">

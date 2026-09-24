@@ -1172,5 +1172,14 @@
             "warehouse_floor_cut": "หน้างาน: ตัด",
             "spoolman_consumption_event": "Spoolman"
         }
+    },
+    "exportMenu": {
+        "button": "Export",
+        "excel": "Excel (.xlsx)",
+        "csv": "CSV (.csv)",
+        "units": "Export หน่วย/ม้วน",
+        "balances": "Export ยอดคงเหลือ",
+        "materials": "Export วัตถุดิบ",
+        "movements": "Export ความเคลื่อนไหว"
     }
 }

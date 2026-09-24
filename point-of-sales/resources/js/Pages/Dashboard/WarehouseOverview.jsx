@@ -7,6 +7,8 @@ import {
     IconArrowsExchange,
     IconPackage,
 } from "@tabler/icons-react";
+import ExportMenu from "@/Components/Dashboard/ExportMenu";
+import hasAnyPermission from "@/Utils/Permission";
 
 export default function WarehouseOverview({
     warehouses = [],
@@ -33,6 +35,13 @@ export default function WarehouseOverview({
                                 : t("warehouse.overview.subtitleUser")}
                         </p>
                     </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                    {hasAnyPermission(["products-export"]) && (
+                        <>
+                            <ExportMenu routeName="export.warehouse.balances" label={t("exportMenu.balances")} />
+                            <ExportMenu routeName="export.warehouse.materials" label={t("exportMenu.materials")} />
+                        </>
+                    )}
                     <Link
                         href={floorUrl}
                         className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
@@ -40,6 +49,7 @@ export default function WarehouseOverview({
                         <IconScale size={18} />
                         {t("warehouse.overview.openFloor")}
                     </Link>
+                    </div>
                 </div>
 
                 {flash?.success && (

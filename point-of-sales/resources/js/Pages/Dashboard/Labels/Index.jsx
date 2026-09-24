@@ -4,6 +4,8 @@ import { Head, router } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IconBarcode, IconPrinter, IconSearch } from "@tabler/icons-react";
+import ExportMenu from "@/Components/Dashboard/ExportMenu";
+import hasAnyPermission from "@/Utils/Permission";
 
 export default function LabelsIndex({
     warehouses = [],
@@ -63,6 +65,14 @@ export default function LabelsIndex({
                             })}
                         </p>
                     </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                    {hasAnyPermission(["products-export"]) && (
+                        <ExportMenu
+                            routeName="export.warehouse.units"
+                            params={{ warehouse_id: currentWarehouseId }}
+                            label={t("exportMenu.units")}
+                        />
+                    )}
                     <button
                         type="button"
                         disabled={selectedUnits.length === 0}
@@ -75,6 +85,7 @@ export default function LabelsIndex({
                         })}{" "}
                         ({selectedUnits.length})
                     </button>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-3">
