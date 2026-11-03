@@ -16,7 +16,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Admin downloads (Excel or CSV via ?format=csv). Every export is limited to the warehouses the
- * user may access; the ledger export applies the same filters as the history page.
+ * user may access and can be narrowed to RM or FG with ?domain=; the ledger export applies the
+ * same filters as the history page.
  */
 class WarehouseExportController extends Controller
 {
@@ -26,7 +27,7 @@ class WarehouseExportController extends Controller
 
     public function materials(Request $request): BinaryFileResponse
     {
-        return $this->download($request, new MaterialsExport($this->warehouseIds($request)), 'materials');
+        return $this->download($request, new MaterialsExport($this->warehouseIds($request), $this->domain($request)), 'materials');
     }
 
     public function units(Request $request): BinaryFileResponse
@@ -35,6 +36,7 @@ class WarehouseExportController extends Controller
             $this->warehouseIds($request),
             $request->integer('warehouse_id') ?: null,
             $request->string('status')->upper()->value() ?: null,
+            $this->domain($request),
         ), 'units');
     }
 
@@ -43,6 +45,7 @@ class WarehouseExportController extends Controller
         return $this->download($request, new StockBalancesExport(
             $this->warehouseIds($request),
             $request->integer('warehouse_id') ?: null,
+            $this->domain($request),
         ), 'stock-balances');
     }
 
@@ -52,6 +55,12 @@ class WarehouseExportController extends Controller
             StockLedgerFilter::fromRequest($request),
             $this->warehouseIds($request),
         ), 'stock-movements');
+    }
+
+    /** Optional ?domain=RM|FG; every export covers both when it is missing. */
+    private function domain(Request $request): ?string
+    {
+        return StockLedgerFilter::domain($request->query('domain'));
     }
 
     /**

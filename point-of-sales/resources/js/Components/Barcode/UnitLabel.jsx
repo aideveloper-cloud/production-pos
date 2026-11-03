@@ -1,16 +1,19 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import JsBarcode from "jsbarcode";
+import QRCode from "qrcode";
 
 /**
- * Warehouse physical-unit label (unit_code barcode + optional Spoolman QR text).
+ * Warehouse physical-unit label. QR payload is the unit code so the tablet can scan and cut.
  */
 export default function UnitLabel({
     unit,
     size = "70x50",
+    symbol = "qr",
     showWeight = true,
     showWarehouse = true,
 }) {
     const barcodeRef = useRef(null);
+    const [qrUrl, setQrUrl] = useState("");
 
     const sizes = {
         "50x30": { width: "50mm", height: "30mm", bw: 1.4, bh: 36, font: 10 },
@@ -19,23 +22,45 @@ export default function UnitLabel({
     };
     const s = sizes[size] || sizes["70x50"];
     const code = unit?.unit_code || "";
+    const showBarcode = symbol === "barcode" || symbol === "both";
+    const showQr = symbol === "qr" || symbol === "both";
 
     useEffect(() => {
-        if (!barcodeRef.current || !code) return;
+        if (!showBarcode || !barcodeRef.current || !code) return;
         try {
             JsBarcode(barcodeRef.current, code, {
                 format: "CODE128",
-                width: s.bw,
-                height: s.bh,
+                width: symbol === "both" ? 1.2 : s.bw,
+                height: symbol === "both" ? 32 : s.bh,
                 displayValue: true,
                 fontSize: 11,
-                margin: 4,
+                margin: 2,
                 background: "#ffffff",
             });
         } catch (e) {
             console.error("Unit barcode error:", e);
         }
-    }, [code, s.bw, s.bh]);
+    }, [code, s.bw, s.bh, showBarcode, symbol]);
+
+    useEffect(() => {
+        if (!showQr || !code) {
+            setQrUrl("");
+            return;
+        }
+        let cancelled = false;
+        QRCode.toDataURL(code, {
+            margin: 1,
+            width: 220,
+            errorCorrectionLevel: "M",
+        })
+            .then((url) => {
+                if (!cancelled) setQrUrl(url);
+            })
+            .catch((e) => console.error("Unit QR error:", e));
+        return () => {
+            cancelled = true;
+        };
+    }, [code, showQr]);
 
     if (!unit) return null;
 
@@ -55,7 +80,19 @@ export default function UnitLabel({
                 {unit.product_title || unit.sku}
             </p>
             <p className="text-[10px] font-medium text-slate-500">{unit.sku}</p>
-            <svg ref={barcodeRef} className="max-w-full" data-code={code} />
+            <div className={`flex w-full items-center justify-center gap-1 ${showBarcode && showQr ? "flex-row" : "flex-col"}`}>
+                {showBarcode && (
+                    <svg ref={barcodeRef} className="max-w-full" data-code={code} />
+                )}
+                {showQr && qrUrl && (
+                    <img
+                        src={qrUrl}
+                        alt={code}
+                        className="unit-qr shrink-0"
+                        style={{ width: symbol === "both" ? "22mm" : "28mm", height: symbol === "both" ? "22mm" : "28mm" }}
+                    />
+                )}
+            </div>
             {showWeight && (
                 <p className="mt-0.5 font-bold tabular-nums text-slate-900" style={{ fontSize: `${s.font}px` }}>
                     {unit.actual_weight ?? "—"} {unit.weight_uom || "KG"}
@@ -64,9 +101,7 @@ export default function UnitLabel({
             {showWarehouse && unit.warehouse_name && (
                 <p className="text-[9px] text-slate-500">{unit.warehouse_name}</p>
             )}
-            {unit.spoolman_spool_id ? (
-                <p className="text-[8px] text-slate-400">WEB+SPOOLMAN:S-{unit.spoolman_spool_id}</p>
-            ) : null}
+            <p className="text-[9px] font-semibold tracking-wide text-slate-700">{code}</p>
         </div>
     );
 }
@@ -74,6 +109,7 @@ export default function UnitLabel({
 export function UnitLabelGrid({
     units = [],
     size = "70x50",
+    symbol = "qr",
     copies = 1,
     showWeight = true,
     showWarehouse = true,
@@ -99,6 +135,7 @@ export function UnitLabelGrid({
                     key={`${unit.id}-${index}`}
                     unit={unit}
                     size={size}
+                    symbol={symbol}
                     showWeight={showWeight}
                     showWarehouse={showWarehouse}
                 />

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Head, Link, router } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import Table from "@/Components/Dashboard/Table";
 import Pagination from "@/Components/Dashboard/Pagination";
@@ -20,6 +20,7 @@ export default function Index({
     modules = [],
     events = [],
 }) {
+    const warehouse = Boolean(usePage().props.isWarehouseMode);
     const currentFilters = useMemo(
         () => ({
             user_id: filters?.user_id || "",
@@ -41,15 +42,15 @@ export default function Index({
 
     return (
         <>
-            <Head title="Audit Log" />
+            <Head title={warehouse ? "บันทึกการตรวจสอบ" : "Audit Log"} />
 
             <div className="mb-6">
                 <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
                     <IconFileSearch size={28} className="text-primary-500" />
-                    Audit Log
+                    {warehouse ? "บันทึกการตรวจสอบ" : "Audit Log"}
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Histori aktivitas sensitif untuk investigasi operasional dan administratif.
+                    {warehouse ? "ประวัติการทำรายการที่สำคัญ" : "Histori aktivitas sensitif untuk investigasi operasional dan administratif."}
                 </p>
             </div>
 
@@ -64,7 +65,7 @@ export default function Index({
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Aktor</option>
+                    <option value="">{warehouse ? "ทุกคน" : "Semua Aktor"}</option>
                     {users.map((user) => (
                         <option key={user.id} value={user.id}>
                             {user.name}
@@ -82,7 +83,7 @@ export default function Index({
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Modul</option>
+                    <option value="">{warehouse ? "ทุกส่วน" : "Semua Modul"}</option>
                     {modules.map((module) => (
                         <option key={module} value={module}>
                             {module}
@@ -100,7 +101,7 @@ export default function Index({
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Event</option>
+                    <option value="">{warehouse ? "ทุกเหตุการณ์" : "Semua Event"}</option>
                     {events.map((eventName) => (
                         <option key={eventName} value={eventName}>
                             {eventName}
@@ -141,22 +142,22 @@ export default function Index({
                             search: event.target.value,
                         })
                     }
-                    placeholder="Cari target atau deskripsi"
+                    placeholder={warehouse ? "ค้นหาเป้าหมายหรือรายละเอียด" : "Cari target atau deskripsi"}
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 />
             </div>
 
-            <Table.Card title="Histori Audit">
+            <Table.Card title={warehouse ? "ประวัติ" : "Histori Audit"}>
                 <Table>
                     <Table.Thead>
                         <tr>
-                            <Table.Th>Waktu</Table.Th>
-                            <Table.Th>Aktor</Table.Th>
-                            <Table.Th>Modul</Table.Th>
-                            <Table.Th>Event</Table.Th>
-                            <Table.Th>Target</Table.Th>
-                            <Table.Th>Deskripsi</Table.Th>
-                            <Table.Th className="w-20 text-center">Aksi</Table.Th>
+                            <Table.Th>{warehouse ? "เวลา" : "Waktu"}</Table.Th>
+                            <Table.Th>{warehouse ? "ผู้ทำ" : "Aktor"}</Table.Th>
+                            <Table.Th>{warehouse ? "ส่วน" : "Modul"}</Table.Th>
+                            <Table.Th>{warehouse ? "เหตุการณ์" : "Event"}</Table.Th>
+                            <Table.Th>{warehouse ? "เป้าหมาย" : "Target"}</Table.Th>
+                            <Table.Th>{warehouse ? "รายละเอียด" : "Deskripsi"}</Table.Th>
+                            <Table.Th className="w-20 text-center">{warehouse ? "ดู" : "Aksi"}</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -199,7 +200,7 @@ export default function Index({
                         ) : (
                             <Table.Empty
                                 colSpan={7}
-                                message="Belum ada data audit log."
+                                message={warehouse ? "ยังไม่มีบันทึก" : "Belum ada data audit log."}
                             />
                         )}
                     </Table.Tbody>

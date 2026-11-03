@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pos-laravel",
+      "runtimeExecutable": "php",
+      "runtimeArgs": [
+        "point-of-sales/artisan",
+        "serve",
+        "--host=0.0.0.0",
+        "--port=8000"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "pos-http-test",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd point-of-sales\\public && set APP_URL=http://localhost:8001&& set SESSION_SECURE_COOKIE=false&& php -S 127.0.0.1:8001 -t . ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"
+      ],
+      "port": 8001
+    }
+  ]
+}

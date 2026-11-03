@@ -10,11 +10,63 @@ import {
 import ExportMenu from "@/Components/Dashboard/ExportMenu";
 import hasAnyPermission from "@/Utils/Permission";
 
+function DailyDigest() {
+    const { t } = useTranslation();
+    const digest = usePage().props.dailyStockDigest;
+
+    if (!digest?.domains) {
+        return null;
+    }
+
+    const cards = [
+        ["RM", t("warehouse.overview.rawMaterial"), t("warehouse.overview.issued"), "border-amber-200 bg-amber-50"],
+        ["FG", t("warehouse.overview.finishedGoods"), t("warehouse.overview.issuedFg"), "border-sky-200 bg-sky-50"],
+    ];
+
+    return (
+        <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-slate-700">
+                {t("warehouse.overview.today")} · {digest.date}
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2">
+                {cards.map(([domain, title, issueLabel, tone]) => {
+                    const row = digest.domains[domain] || {};
+                    const names = row.empty_names || [];
+
+                    return (
+                        <div key={domain} className={`rounded-2xl border p-5 ${tone}`}>
+                            <p className="text-base font-semibold text-slate-900">{title}</p>
+                            <dl className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                                <div>
+                                    <dt className="text-slate-500">{t("warehouse.overview.received")}</dt>
+                                    <dd className="text-lg font-semibold text-slate-900">{row.receive_qty || 0}</dd>
+                                    <dd className="text-xs text-slate-500">{row.receive_moves || 0} {t("warehouse.overview.moves")}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-slate-500">{issueLabel}</dt>
+                                    <dd className="text-lg font-semibold text-slate-900">{row.issue_qty || 0}</dd>
+                                    <dd className="text-xs text-slate-500">{row.issue_moves || 0} {t("warehouse.overview.moves")}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-slate-500">{t("warehouse.overview.emptySkus")}</dt>
+                                    <dd className="text-lg font-semibold text-slate-900">{row.empty || 0}</dd>
+                                </div>
+                            </dl>
+                            <p className="mt-3 text-xs text-slate-600">
+                                {names.length > 0 ? names.slice(0, 4).join(" · ") : t("warehouse.overview.noEmpty")}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function WarehouseOverview({
     warehouses = [],
     recentMovements = [],
     isAdmin = false,
-    floorUrl,
 }) {
     const { t } = useTranslation();
     const flash = usePage().props.flash;
@@ -43,7 +95,7 @@ export default function WarehouseOverview({
                         </>
                     )}
                     <Link
-                        href={floorUrl}
+                        href={route("warehouse-floor.index")}
                         className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
                     >
                         <IconScale size={18} />
@@ -57,6 +109,8 @@ export default function WarehouseOverview({
                         {flash.success}
                     </div>
                 )}
+
+                <DailyDigest />
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {warehouses.map((wh) => (
@@ -102,7 +156,7 @@ export default function WarehouseOverview({
                                 </div>
                             </dl>
                             <Link
-                                href={`${floorUrl}?warehouse_id=${wh.id}`}
+                                href={route("warehouse-floor.index", { warehouse_id: wh.id })}
                                 className="mt-4 inline-flex text-sm font-medium text-slate-900 underline-offset-2 hover:underline"
                             >
                                 {t("warehouse.overview.openFloorLink")} →

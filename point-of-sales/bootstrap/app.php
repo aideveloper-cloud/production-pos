@@ -118,10 +118,65 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            $user = $request->user();
+            $warehouse = (bool) config('warehouse.is_warehouse');
+            $canDashboard = $user && $user->can('dashboard-access');
+
+            if (! $user) {
+                $homeUrl = url('/');
+                $homeLabel = $warehouse ? 'กลับหน้าเข้าสู่ระบบ' : __('Kembali ke Beranda');
+            } elseif ($warehouse && ! $canDashboard) {
+                $homeUrl = route('pos.index');
+                $homeLabel = 'กลับหน้า POS';
+            } elseif ($canDashboard) {
+                $homeUrl = route('dashboard');
+                $homeLabel = $warehouse ? 'กลับแดชบอร์ด' : __('Kembali ke Dashboard');
+            } else {
+                $homeUrl = route('dashboard.access');
+                $homeLabel = $warehouse ? 'กลับหน้าแรก' : __('Kembali ke Dashboard');
+            }
+
             return Inertia::render('Error', [
                 'status' => $status,
-                'homeUrl' => $request->user() ? route('dashboard') : url('/'),
-                'homeLabel' => $request->user() ? __('Kembali ke Dashboard') : __('Kembali ke Beranda'),
+                'homeUrl' => $homeUrl,
+                'homeLabel' => $homeLabel,
+                'copy' => $warehouse ? [
+                    'brand' => 'K Garden',
+                    'statusLabel' => 'สถานะ',
+                    'errorState' => 'ข้อผิดพลาด',
+                    'back' => 'ย้อนกลับ',
+                    'themeLight' => 'โหมดมืด',
+                    'themeDark' => 'โหมดสว่าง',
+                    'hint' => match ($status) {
+                        403 => $canDashboard
+                            ? 'บัญชีนี้ไม่มีสิทธิ์สำหรับรายการนี้'
+                            : 'บัญชีเครื่อง POS เปิดแดชบอร์ดไม่ได้ กลับไปทำงานที่หน้า POS ส่วนแดชบอร์ดใช้บัญชีแอดมิน',
+                        500 => 'ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้ง',
+                        default => 'ตรวจสอบที่อยู่หรือสิทธิ์ แล้วลองใหม่อีกครั้ง',
+                    },
+                    'title' => match ($status) {
+                        401 => 'ต้องเข้าสู่ระบบใหม่',
+                        403 => 'ไม่มีสิทธิ์เปิดหน้านี้',
+                        404 => 'ไม่พบหน้านี้',
+                        419 => 'เซสชันหมดอายุ',
+                        429 => 'คำขอมากเกินไป',
+                        500 => 'เซิร์ฟเวอร์ขัดข้อง',
+                        503 => 'ระบบยังไม่พร้อม',
+                        default => 'เกิดข้อผิดพลาด',
+                    },
+                    'description' => match ($status) {
+                        401 => 'เซสชันไม่ถูกต้อง ให้เข้าสู่ระบบอีกครั้ง',
+                        403 => $canDashboard
+                            ? 'บัญชีนี้ไม่มีสิทธิ์เปิดหน้ารายการนี้'
+                            : 'เครื่องนี้ล็อกอินเป็นบัญชี POS จึงเปิดหน้าแดชบอร์ดไม่ได้',
+                        404 => 'ไม่พบหน้าที่ขอ หรือที่อยู่ไม่ถูกต้อง',
+                        419 => 'เซสชันหมดอายุ โหลดหน้าใหม่แล้วลองอีกครั้ง',
+                        429 => 'รอสักครู่แล้วลองใหม่',
+                        500 => 'ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้ง',
+                        503 => 'ระบบกำลังปิดปรับปรุง',
+                        default => 'ลองใหม่อีกครั้ง',
+                    },
+                ] : null,
             ])->toResponse($request)->setStatusCode($status);
         });
     })->create();

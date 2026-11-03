@@ -16,6 +16,8 @@ export default function Notification() {
         expiringBatchNotifications = [],
         receivableNotifications = [],
         payableNotifications = [],
+        isWarehouseMode,
+        dailyStockDigest,
     } = usePage().props;
 
     const mapItems = (items) =>
@@ -38,7 +40,30 @@ export default function Notification() {
                 ),
         }));
 
-    const mergeData = () => [
+    const mergeData = () => {
+        if (isWarehouseMode && dailyStockDigest?.domains) {
+            return ["RM", "FG"].map((domain) => {
+                const row = dailyStockDigest.domains[domain] || {};
+                const label = domain === "FG" ? "สินค้าสำเร็จรูป" : "วัตถุดิบ";
+                const verb = domain === "FG" ? "จ่าย" : "ตัด";
+                const names = (row.empty_names || []).slice(0, 2).join(", ");
+
+                return {
+                    id: `day-${dailyStockDigest.date}-${domain}`,
+                    title: `สรุปวันนี้ · ${label}`,
+                    subtitle: `รับเข้า ${row.receive_moves || 0} (${row.receive_qty || 0}) · ${verb} ${row.issue_moves || 0} (${row.issue_qty || 0}) · หมดสต็อก ${row.empty || 0}${names ? ` · ${names}` : ""}`,
+                    type: "digest",
+                    noAck: true,
+                    icon: (
+                        <span className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${domain === "FG" ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-amber-700"}`}>
+                            {domain}
+                        </span>
+                    ),
+                };
+            });
+        }
+
+        return [
         ...mapItems(
             lowStockNotifications.map((n) => ({
                 ...n,
@@ -74,6 +99,7 @@ export default function Notification() {
             }))
         ),
     ];
+    };
 
     const [data, setData] = useState(mergeData());
 
@@ -105,7 +131,7 @@ export default function Notification() {
     // Sync when low stock changes (e.g., restocked items disappear)
     useEffect(() => {
         setData(mergeData());
-    },         [lowStockNotifications, expiringBatchNotifications, receivableNotifications, payableNotifications]);
+    }, [lowStockNotifications, expiringBatchNotifications, receivableNotifications, payableNotifications, isWarehouseMode, dailyStockDigest]);
 
     const handleMarkRead = (id) => {
         const item = data.find((d) => d.id === id);
@@ -137,7 +163,7 @@ export default function Notification() {
         <div className="flex flex-col gap-3 items-start max-h-80 overflow-y-auto pr-1">
             {badgeCount === 0 && (
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Tidak ada notifikasi
+                    {isWarehouseMode ? "วันนี้ยังไม่มีแจ้งเตือน" : "Tidak ada notifikasi"}
                 </div>
             )}
             {data.map((item) => (
@@ -162,7 +188,7 @@ export default function Notification() {
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-primary-600 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-900/30 border border-transparent hover:border-primary-200 dark:hover:border-primary-800 ${item.noAck ? "opacity-50 cursor-default" : ""}`}
                     >
                         <IconCircleCheck size={16} />
-                        Dibaca
+                        {isWarehouseMode ? "รับทราบ" : "Dibaca"}
                     </button>
                 </div>
             ))}
@@ -194,10 +220,10 @@ export default function Notification() {
                         <Menu.Items className="absolute rounded-2xl w-[600px] max-w-[94vw] border md:right-0 z-[100] bg-white dark:bg-gray-950 dark:border-gray-900 shadow-2xl">
                             <div className="flex justify-between items-center gap-2 p-4 border-b dark:border-gray-900">
                                 <div className="text-xl font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                                    Notifikasi
+                                    {isWarehouseMode ? "แจ้งเตือนรายวัน" : "Notifikasi"}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {badgeCount > 0 && (
+                                    {badgeCount > 0 && !isWarehouseMode && (
                                         <button
                                             onClick={handleMarkAllRead}
                                             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
@@ -232,7 +258,7 @@ export default function Notification() {
                     >
                         <div className="flex justify-between items-center gap-2 p-4 border-b mt-2 dark:border-gray-900 ">
                             <div className="text-base font-bold text-gray-500 dark:text-gray-400 ">
-                                Notifications
+                                {isWarehouseMode ? "แจ้งเตือนรายวัน" : "Notifications"}
                             </div>
                             <IconDots className="text-gray-500 dark:text-gray-400" size={24} />
                         </div>

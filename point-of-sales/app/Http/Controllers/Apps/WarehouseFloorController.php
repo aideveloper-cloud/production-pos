@@ -29,13 +29,25 @@ class WarehouseFloorController extends Controller
         return $this->renderFloor($request, 'Dashboard/WarehouseFloor/Index');
     }
 
-    public function pos(Request $request): Response
+    /**
+     * Legacy /pos entry: send the device to its own POS (RM or FG), RM when none yet.
+     */
+    public function entry(Request $request): RedirectResponse
     {
+        $domain = strtolower((string) $request->session()->get('pos.domain', 'RM'));
+
+        return redirect()->route('pos.show', ['domain' => $domain, ...$request->query()]);
+    }
+
+    public function pos(Request $request, string $domain): Response|RedirectResponse
+    {
+        $domain = $this->routeDomain($domain);
         $user = $request->user();
         $sessionWarehouseId = (int) $request->session()->get('pos.warehouse_id', 0);
 
         if (! $user?->isSuperAdmin() && $sessionWarehouseId <= 0) {
             return Inertia::render('Pos/Unlock', [
+                'domain' => $domain,
                 'warehouses' => Warehouse::query()
                     ->whereIn('code', ['WH-PHRANON', 'WH-DECHA-MESH', 'WH-DECHA-POST', 'WH-CHOKDEE'])
                     ->where('is_active', true)
@@ -50,13 +62,20 @@ class WarehouseFloorController extends Controller
             ]);
         }
 
-        return $this->renderFloor($request, 'Pos/Index', $sessionWarehouseId);
+        // A PIN-unlocked device belongs to one POS; it cannot wander into the other one.
+        $deviceDomain = $this->deviceDomain($request);
+        if ($deviceDomain && $deviceDomain !== $domain) {
+            return redirect()->route('pos.show', ['domain' => strtolower($deviceDomain)]);
+        }
+
+        return $this->renderFloor($request, 'Pos/Index', $sessionWarehouseId, $domain);
     }
 
-    public function unlock(Request $request): RedirectResponse
+    public function unlock(Request $request, string $domain): RedirectResponse
     {
+        $domain = $this->routeDomain($domain);
         $validated = $request->validate([
-            'pin' => ['required', 'string', 'digits_between:4,6'],
+            'pin' => ['required', 'string', 'digits:4'],
         ]);
 
         $pin = $validated['pin'];
@@ -78,13 +97,15 @@ class WarehouseFloorController extends Controller
         Auth::login($posUser, true);
         $request->session()->regenerate();
         $request->session()->put('pos.warehouse_id', $matched->id);
+        $request->session()->put('pos.domain', $domain);
         $request->session()->forget('pos.operator_name');
 
-        return redirect()->route('pos.index');
+        return redirect()->route('pos.show', ['domain' => strtolower($domain)]);
     }
 
     public function lock(Request $request): RedirectResponse
     {
+        $domain = strtolower((string) $request->session()->get('pos.domain', 'RM'));
         $request->session()->forget(['pos.warehouse_id', 'pos.operator_name']);
 
         if ($request->user()?->email === 'pos@wms.local') {
@@ -93,7 +114,7 @@ class WarehouseFloorController extends Controller
             $request->session()->regenerateToken();
         }
 
-        return redirect()->route('pos.index');
+        return redirect()->route('pos.show', ['domain' => $domain]);
     }
 
     public function lookup(Request $request)
@@ -128,7 +149,7 @@ class WarehouseFloorController extends Controller
         }
 
         $unitQuery = PhysicalUnit::query()
-            ->with(['product:id,sku,title,base_uom,barcode'])
+            ->with(['product:id,sku,title,domain,base_uom,barcode'])
             ->where('status', 'ACTIVE');
 
         if ($warehouseId > 0) {
@@ -156,6 +177,7 @@ class WarehouseFloorController extends Controller
         if ($unit) {
             $warehouse = Warehouse::query()->find($unit->warehouse_id);
             abort_unless($warehouse && $this->outletAccessService->canUseWarehouse($user, $warehouse), 403);
+            $this->assertPosDomain($request, (string) $unit->product?->domain);
 
             return response()->json([
                 'type' => 'unit',
@@ -167,6 +189,7 @@ class WarehouseFloorController extends Controller
                     'lot_code' => $unit->lot_code,
                     'spoolman_spool_id' => $unit->spoolman_spool_id,
                     'sku' => $unit->product?->sku,
+                    'domain' => $unit->product?->domain,
                     'product_id' => $unit->product_id,
                     'product_title' => $unit->product?->title,
                     'base_uom' => $unit->product?->base_uom,
@@ -180,9 +203,11 @@ class WarehouseFloorController extends Controller
                     $q->whereRaw('UPPER(sku) = ?', [strtoupper($raw)])
                         ->orWhereRaw('UPPER(COALESCE(barcode, "")) = ?', [strtoupper($raw)]);
                 })
-                ->first(['id', 'sku', 'title', 'base_uom', 'barcode']);
+                ->first(['id', 'sku', 'title', 'domain', 'base_uom', 'barcode']);
 
             if ($product) {
+                $this->assertPosDomain($request, (string) $product->domain);
+
                 return response()->json([
                     'type' => 'product',
                     'product' => $product,
@@ -196,7 +221,7 @@ class WarehouseFloorController extends Controller
         ], 404);
     }
 
-    private function renderFloor(Request $request, string $page, ?int $lockedWarehouseId = null): Response
+    private function renderFloor(Request $request, string $page, ?int $lockedWarehouseId = null, ?string $posDomain = null): Response
     {
         $user = $request->user();
         abort_unless($user, 401);
@@ -207,6 +232,12 @@ class WarehouseFloorController extends Controller
             $warehouses = $warehouses->where('id', $lockedWarehouseId)->values();
         }
 
+        // The admin floor opens on every warehouse at once (?warehouse_id=all, the default) so nothing
+        // looks missing just because it sits in another warehouse; the tablet POS stays per warehouse.
+        $allWarehouses = $page === 'Dashboard/WarehouseFloor/Index'
+            && $warehouses->count() > 1
+            && in_array((string) $request->input('warehouse_id', 'all'), ['', 'all'], true);
+
         $warehouseId = (int) $request->integer('warehouse_id');
         if ($lockedWarehouseId && ! $user->isSuperAdmin()) {
             $warehouseId = $lockedWarehouseId;
@@ -216,23 +247,29 @@ class WarehouseFloorController extends Controller
 
         $warehouse = $warehouses->firstWhere('id', $warehouseId);
         abort_unless($warehouse, 403);
+        $scopeIds = $allWarehouses ? $warehouses->pluck('id')->all() : [$warehouse->id];
+        $warehouseNames = $warehouses->pluck('name', 'id');
 
         $units = PhysicalUnit::query()
-            ->with(['product:id,sku,title,base_uom,spoolman_enabled,stock_calc_strategy,standard_weight_kg'])
-            ->where('warehouse_id', $warehouse->id)
+            ->with(['product:id,sku,title,domain,base_uom,spoolman_enabled,stock_calc_strategy,standard_weight_kg'])
+            ->whereIn('warehouse_id', $scopeIds)
             ->where('status', 'ACTIVE')
             ->where('actual_weight', '>', 0)
+            ->when($posDomain, fn ($query) => $query->whereHas('product', fn ($q) => $q->where('domain', $posDomain)))
             ->orderBy('unit_code')
-            ->limit(400)
+            ->limit($allWarehouses ? 1500 : 400)
             ->get()
             ->map(fn (PhysicalUnit $unit) => [
                 'id' => $unit->id,
+                'warehouse_id' => $unit->warehouse_id,
+                'warehouse_name' => $warehouseNames[$unit->warehouse_id] ?? null,
                 'unit_code' => $unit->unit_code,
                 'actual_weight' => $unit->actual_weight,
                 'weight_uom' => $unit->weight_uom,
                 'lot_code' => $unit->lot_code,
                 'spoolman_spool_id' => $unit->spoolman_spool_id,
                 'sku' => $unit->product?->sku,
+                'domain' => $unit->product?->domain,
                 'product_id' => $unit->product_id,
                 'product_title' => $unit->product?->title,
                 'base_uom' => $unit->product?->base_uom,
@@ -242,14 +279,27 @@ class WarehouseFloorController extends Controller
 
         $products = Product::query()
             ->where(function ($q) {
-                $q->where('domain', 'RM')
+                $q->whereIn('domain', ['RM', 'FG'])
                     ->orWhere('tracks_physical_units', true)
                     ->orWhere('spoolman_enabled', true);
             })
-            ->whereHas('warehouses', fn ($q) => $q->where('warehouses.id', $warehouse->id))
+            ->where('is_composite', false)
+            ->when($posDomain, fn ($query) => $query->where('domain', $posDomain))
+            ->where(function ($q) use ($scopeIds) {
+                $q->whereHas('warehouses', fn ($q) => $q->whereIn('warehouses.id', $scopeIds))
+                    ->orWhere(function ($q) {
+                        $q->whereIn('domain', ['RM', 'FG'])->where('tracks_physical_units', true);
+                    });
+            })
+            ->with(['warehouses' => fn ($q) => $q->select('warehouses.id')->whereIn('warehouses.id', $scopeIds)])
             ->orderBy('sku')
-            ->limit(400)
-            ->get(['id', 'sku', 'title', 'base_uom', 'spoolman_enabled', 'tracks_physical_units']);
+            ->limit(500)
+            ->get(['id', 'sku', 'title', 'domain', 'base_uom', 'spoolman_enabled', 'tracks_physical_units'])
+            // Lets the all-warehouses admin view preselect where a product is received into.
+            ->map(fn (Product $product) => [
+                ...$product->only(['id', 'sku', 'title', 'domain', 'base_uom', 'spoolman_enabled', 'tracks_physical_units']),
+                'warehouse_ids' => $product->warehouses->pluck('id')->values()->all(),
+            ]);
 
         return Inertia::render($page, [
             'warehouses' => $warehouses->map(fn (Warehouse $w) => [
@@ -257,13 +307,14 @@ class WarehouseFloorController extends Controller
                 'code' => $w->code,
                 'name' => $w->name,
             ])->values(),
-            'currentWarehouseId' => $warehouse->id,
+            'currentWarehouseId' => $allWarehouses ? null : $warehouse->id,
             'units' => $units,
             'products' => $products,
             'isAdmin' => $user->isSuperAdmin(),
             'presetsKg' => [1, 2, 5, 10, 20],
             'operatorName' => (string) $request->session()->get('pos.operator_name', ''),
             'requiresOperatorName' => true,
+            'posDomain' => $posDomain,
         ]);
     }
 
@@ -283,6 +334,8 @@ class WarehouseFloorController extends Controller
         ]);
 
         $this->assertPosWarehouse($request, (int) $validated['warehouse_id']);
+        $product = Product::query()->findOrFail((int) $validated['product_id']);
+        $this->assertPosDomain($request, $product->domain);
 
         $warehouse = Warehouse::query()->findOrFail($validated['warehouse_id']);
         abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 403);
@@ -326,6 +379,7 @@ class WarehouseFloorController extends Controller
 
         $unit = PhysicalUnit::query()->findOrFail($validated['physical_unit_id']);
         $this->assertPosWarehouse($request, (int) $unit->warehouse_id);
+        $this->assertPosDomain($request, (string) $unit->product()->value('domain'));
 
         $warehouse = Warehouse::query()->findOrFail($unit->warehouse_id);
         abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 403);
@@ -347,6 +401,48 @@ class WarehouseFloorController extends Controller
                 'uom' => $result['ledger']->uom,
             ])
         );
+    }
+
+    private function assertPosDomain(Request $request, ?string $productDomain): void
+    {
+        if (! $request->routeIs('pos.receive', 'pos.cut', 'pos.lookup')) {
+            return;
+        }
+
+        $domain = $this->routeDomain((string) $request->route('domain'));
+        $deviceDomain = $this->deviceDomain($request);
+        if ($deviceDomain && $deviceDomain !== $domain) {
+            abort(403, 'POS device is locked to '.$deviceDomain.'.');
+        }
+
+        if ($productDomain !== $domain) {
+            $other = $productDomain === 'FG' ? 'สินค้าสำเร็จรูป (FG)' : 'วัตถุดิบ (RM)';
+            throw ValidationException::withMessages([
+                'domain' => 'นี่คือ POS '.$domain.' รายการนี้เป็น'.$other.' ให้ใช้ POS '.($domain === 'RM' ? 'FG' : 'RM'),
+            ]);
+        }
+    }
+
+    private function routeDomain(string $domain): string
+    {
+        $domain = strtoupper($domain);
+        abort_unless(in_array($domain, ['RM', 'FG'], true), 404);
+
+        return $domain;
+    }
+
+    /**
+     * The POS a PIN-unlocked device was opened as; null for admins and dashboard users.
+     */
+    private function deviceDomain(Request $request): ?string
+    {
+        if ($request->user()?->isSuperAdmin() || (int) $request->session()->get('pos.warehouse_id', 0) <= 0) {
+            return null;
+        }
+
+        $domain = (string) $request->session()->get('pos.domain', '');
+
+        return in_array($domain, ['RM', 'FG'], true) ? $domain : null;
     }
 
     private function assertPosWarehouse(Request $request, int $warehouseId): void

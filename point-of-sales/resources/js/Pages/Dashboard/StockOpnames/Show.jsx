@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { DomainBadge } from "@/Components/Dashboard/DomainFilter";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, router, useForm } from "@inertiajs/react";
 import Button from "@/Components/Dashboard/Button";
@@ -555,7 +556,8 @@ export default function Show({
                                         className="flex w-full items-start justify-between gap-3 rounded-xl border border-slate-200 p-4 text-left transition hover:border-primary-300 hover:bg-primary-50/50 dark:border-slate-700 dark:hover:border-primary-700 dark:hover:bg-primary-950/20"
                                     >
                                         <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-200">
+                                            <p className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                                <DomainBadge domain={product.domain} />
                                                 {product.title}
                                             </p>
                                             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">

@@ -14,3 +14,7 @@ storage/framework/views/*
 bootstrap/cache/*.php
 whatsapp-service
 tests
+
+# Playwright e2e
+e2e
+database/e2e.sqlite

@@ -17,9 +17,10 @@ use Spatie\Permission\PermissionRegistrar;
 /**
  * WMS accounts:
  * - admin@wms.local → dashboard; password from WMS_ADMIN_PASSWORD
- * - pos@wms.local (device) → unlocked via warehouse PIN on /pos
+ * - pos@wms.local (device) → unlocked via warehouse PIN on /pos/rm or /pos/fg
  *
- * Warehouse POS PINs come from WMS_POS_PINS ("WH-PHRANON:123456,WH-CHOKDEE:654321").
+ * Warehouse POS PINs come from WMS_POS_PINS ("WH-PHRANON:1234,WH-CHOKDEE:5678"), exactly 4 digits;
+ * one PIN per warehouse unlocks both POS RM and POS FG. Change one later with `php artisan wms:pos-pin`.
  * Credentials are never hard-coded here. When a value is not configured, an existing password/PIN
  * is kept and a missing one is generated and printed once, so re-running on production never
  * silently resets what staff already use.
@@ -70,7 +71,7 @@ class CompanyUserSeeder extends Seeder
                 continue; // keep the PIN staff already use
             }
             if ($plain === null) {
-                $plain = (string) random_int(100000, 999999);
+                $plain = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
                 $this->command?->warn("POS PIN for {$warehouse->code}: {$plain} (set WMS_POS_PINS to choose your own)");
             }
             $warehouse->update(['pos_pin' => Hash::make($plain)]);
@@ -93,6 +94,7 @@ class CompanyUserSeeder extends Seeder
         $posRole = Role::firstOrCreate(['name' => 'warehouse-pos', 'guard_name' => 'web']);
 
         $posPermissionNames = [
+            'dashboard-access',
             'stock-mutations-access',
             'products-access',
         ];
@@ -154,8 +156,10 @@ class CompanyUserSeeder extends Seeder
         $pins = [];
         foreach (array_filter(array_map('trim', explode(',', (string) env('WMS_POS_PINS', '')))) as $pair) {
             [$code, $pin] = array_pad(array_map('trim', explode(':', $pair, 2)), 2, '');
-            if ($code !== '' && preg_match('/^\d{4,6}$/', $pin)) {
+            if ($code !== '' && preg_match('/^\d{4}$/', $pin)) {
                 $pins[$code] = $pin;
+            } elseif ($code !== '') {
+                $this->command?->warn("WMS_POS_PINS: PIN for {$code} must be exactly 4 digits — ignored");
             }
         }
 

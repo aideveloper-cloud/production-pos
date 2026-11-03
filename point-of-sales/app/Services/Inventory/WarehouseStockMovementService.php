@@ -216,6 +216,19 @@ class WarehouseStockMovementService
         return ['ledger' => $result['ledger'], 'physical_unit' => $unit->fresh()];
     }
 
+    private function unitTypeFor(Product $product): string
+    {
+        if ($product->spoolman_enabled) {
+            return 'SPOOL';
+        }
+
+        return match (strtoupper((string) $product->base_uom)) {
+            'ROLL' => 'ROLL',
+            'SHEET' => 'SHEET_PACK',
+            default => 'OTHER',
+        };
+    }
+
     private function convertOrFail(float $qty, string $fromUom, string $toUom): float
     {
         try {
@@ -256,11 +269,36 @@ class WarehouseStockMovementService
             return $opening;
         }
 
-        $code = $data['unit_code'] ?? null;
+        $code = trim((string) ($data['unit_code'] ?? '')) ?: null;
         if ($code) {
-            $existing = PhysicalUnit::query()->where('unit_code', $code)->first();
+            $existing = PhysicalUnit::query()->with(['product:id,sku', 'warehouse:id,name'])->where('unit_code', $code)->first();
             if ($existing) {
+                // Topping up a unit is only allowed for the same product in the same warehouse;
+                // otherwise the qty would land on someone else's roll while the ledger names this product.
+                if ((int) $existing->product_id !== (int) $product->id || (int) $existing->warehouse_id !== (int) $warehouse->id) {
+                    throw ValidationException::withMessages([
+                        'unit_code' => "รหัสหน่วย {$code} เป็นของ {$existing->product?->sku} ที่ {$existing->warehouse?->name} อยู่แล้ว — เว้นว่างให้ระบบสร้างรหัสใหม่ หรือใช้รหัสอื่น",
+                    ]);
+                }
+
                 return $existing;
+            }
+        }
+
+        // Bulk stock (wire, coil, pipe…) is kept as one unit per product per warehouse named after
+        // the SKU, like the opening balances; receives top it up so the floor sees one "RM-W25-S"
+        // line instead of a new PU-… per delivery. Spoolman spools stay one unit each.
+        if (! $code && ! $product->spoolman_enabled) {
+            $bySku = PhysicalUnit::query()
+                ->where('product_id', $product->id)
+                ->where('warehouse_id', $warehouse->id)
+                ->where('unit_code', $product->sku)
+                ->first();
+            if ($bySku) {
+                return $bySku;
+            }
+            if (! PhysicalUnit::query()->where('unit_code', $product->sku)->exists()) {
+                $code = $product->sku;
             }
         }
 
@@ -269,7 +307,7 @@ class WarehouseStockMovementService
             'product_id' => $product->id,
             'warehouse_id' => $warehouse->id,
             'lot_code' => $data['lot_code'] ?? null,
-            'unit_type' => $product->spoolman_enabled ? 'SPOOL' : 'ROLL',
+            'unit_type' => $this->unitTypeFor($product),
             'status' => 'ACTIVE',
             'nominal_weight' => $qty,
             'actual_weight' => 0,

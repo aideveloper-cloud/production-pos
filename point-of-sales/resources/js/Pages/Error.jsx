@@ -48,9 +48,12 @@ const errorContent = {
     },
 };
 
-export default function Error({ status, homeUrl, homeLabel }) {
+export default function Error({ status, homeUrl, homeLabel, copy = null }) {
     const { darkMode, themeSwitcher } = useTheme();
-    const content = errorContent[status] ?? errorContent[500];
+    const content = {
+        ...(errorContent[status] ?? errorContent[500]),
+        ...(copy?.title ? { title: copy.title, description: copy.description } : {}),
+    };
     const Icon = content.icon;
 
     return (
@@ -68,7 +71,7 @@ export default function Error({ status, homeUrl, homeLabel }) {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                                    Point of Sales
+                                    {copy?.brand ?? "Point of Sales"}
                                 </p>
                                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
                                     Error {status}
@@ -82,7 +85,7 @@ export default function Error({ status, homeUrl, homeLabel }) {
                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 backdrop-blur transition hover:border-primary-300 hover:text-primary-600 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-primary-700 dark:hover:text-primary-400"
                         >
                             <span className="h-2.5 w-2.5 rounded-full bg-primary-500" />
-                            {darkMode ? "Mode Terang" : "Mode Gelap"}
+                            {copy ? (darkMode ? copy.themeDark : copy.themeLight) : (darkMode ? "Mode Terang" : "Mode Gelap")}
                         </button>
                     </div>
 
@@ -92,7 +95,7 @@ export default function Error({ status, homeUrl, homeLabel }) {
                                 <div>
                                     <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-600 dark:bg-primary-950/50 dark:text-primary-400">
                                         <Icon size={18} />
-                                        Status {status}
+                                        {copy?.statusLabel ?? "Status"} {status}
                                     </div>
 
                                     <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
@@ -118,14 +121,14 @@ export default function Error({ status, homeUrl, homeLabel }) {
                                             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-primary-700 dark:hover:text-primary-400"
                                         >
                                             <IconArrowLeft size={18} />
-                                            Kembali
+                                            {copy?.back ?? "Kembali"}
                                         </button>
                                     </div>
                                 </div>
 
                                 <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-100 via-white to-primary-50 p-8 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-primary-950/40">
                                     <div className="absolute right-6 top-6 rounded-full border border-primary-200/60 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-primary-600 dark:border-primary-800 dark:bg-slate-900/80 dark:text-primary-400">
-                                        Error State
+                                        {copy?.errorState ?? "Error State"}
                                     </div>
 
                                     <div className="flex min-h-[260px] flex-col justify-between">
@@ -138,7 +141,7 @@ export default function Error({ status, homeUrl, homeLabel }) {
                                                 {status}
                                             </div>
                                             <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-400">
-                                                Pastikan URL, hak akses, atau status layanan sudah sesuai sebelum mencoba lagi.
+                                                {copy?.hint ?? "Pastikan URL, hak akses, atau status layanan sudah sesuai sebelum mencoba lagi."}
                                             </div>
                                         </div>
                                     </div>

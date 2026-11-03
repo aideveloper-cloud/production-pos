@@ -9,9 +9,11 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 
-export default function WarehousePosLayout({ children, warehouseName, showLock = false }) {
+export default function WarehousePosLayout({ children, warehouseName, showLock = false, domain = null }) {
     const { t } = useTranslation();
     const { auth } = usePage().props;
+    const domainTone = domain === "FG" ? "bg-sky-600" : domain === "RM" ? "bg-amber-500" : "bg-slate-900";
+    const domainLabel = domain === "FG" ? "FG สินค้าสำเร็จรูป" : domain === "RM" ? "RM วัตถุดิบ" : null;
     const [isFullscreen, setIsFullscreen] = useState(false);
     const lockForm = useForm({});
 
@@ -33,12 +35,12 @@ export default function WarehousePosLayout({ children, warehouseName, showLock =
         <div className="flex h-[100dvh] flex-col bg-slate-100 text-slate-900">
             <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-3 sm:px-4">
                 <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-white ${domainTone}`}>
                         <IconScale size={18} />
                     </div>
                     <div className="min-w-0">
                         <p className="truncate text-sm font-bold leading-tight">
-                            {t("warehouse.pos.brand")}
+                            {domainLabel || t("warehouse.pos.brand")}
                         </p>
                         {warehouseName && (
                             <p className="truncate text-xs text-slate-500">{warehouseName}</p>

@@ -66,7 +66,7 @@ class SupplierReturnController extends Controller
                 ->get();
         }
 
-        $products = Product::orderBy('title')->get(['id', 'title', 'sku', 'buy_price', 'stock']);
+        $products = Product::orderBy('title')->get(['id', 'title', 'sku', 'domain', 'buy_price', 'stock']);
 
         return Inertia::render('Dashboard/SupplierReturns/Create', [
             'suppliers' => $suppliers,

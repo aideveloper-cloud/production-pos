@@ -5,12 +5,14 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IconBarcode, IconPrinter, IconSearch } from "@tabler/icons-react";
 import ExportMenu from "@/Components/Dashboard/ExportMenu";
+import DomainFilter, { DomainBadge } from "@/Components/Dashboard/DomainFilter";
 import hasAnyPermission from "@/Utils/Permission";
 
 export default function LabelsIndex({
     warehouses = [],
     currentWarehouseId = null,
     search = "",
+    domain = "",
     units = [],
 }) {
     const { t } = useTranslation();
@@ -29,6 +31,7 @@ export default function LabelsIndex({
             {
                 warehouse_id: next.warehouse_id ?? currentWarehouseId ?? undefined,
                 q: next.q ?? q,
+                domain: (next.domain ?? domain) || undefined,
             },
             { preserveState: true, replace: true }
         );
@@ -61,7 +64,8 @@ export default function LabelsIndex({
                         </h1>
                         <p className="text-sm text-slate-500">
                             {t("warehouse.labels.subtitle", {
-                                defaultValue: "สร้างและพิมพ์ป้ายบาร์โค้ดสำหรับหน่วยบนพื้นคลัง",
+                                defaultValue:
+                                    "สร้าง QR และพิมพ์ป้ายหน่วย เพื่อสแกนตัดสต๊อกบนแท็บเล็ต",
                             })}
                         </p>
                     </div>
@@ -69,7 +73,7 @@ export default function LabelsIndex({
                     {hasAnyPermission(["products-export"]) && (
                         <ExportMenu
                             routeName="export.warehouse.units"
-                            params={{ warehouse_id: currentWarehouseId }}
+                            params={{ warehouse_id: currentWarehouseId, domain }}
                             label={t("exportMenu.units")}
                         />
                     )}
@@ -81,7 +85,7 @@ export default function LabelsIndex({
                     >
                         <IconPrinter size={16} />
                         {t("warehouse.labels.printSelected", {
-                            defaultValue: "พิมพ์ป้ายที่เลือก",
+                            defaultValue: "สร้าง QR / พิมพ์",
                         })}{" "}
                         ({selectedUnits.length})
                     </button>
@@ -89,6 +93,7 @@ export default function LabelsIndex({
                 </div>
 
                 <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-3">
+                    <DomainFilter value={domain} onChange={(value) => applyFilters({ domain: value })} />
                     <select
                         value={currentWarehouseId || ""}
                         onChange={(e) =>
@@ -174,7 +179,10 @@ export default function LabelsIndex({
                                     </td>
                                     <td className="px-4 py-3 font-semibold">{unit.unit_code}</td>
                                     <td className="px-4 py-3">
-                                        <div>{unit.sku}</div>
+                                        <div className="flex items-center gap-1.5">
+                                            <DomainBadge domain={unit.domain} />
+                                            {unit.sku}
+                                        </div>
                                         <div className="text-xs text-slate-400">
                                             {unit.product_title}
                                         </div>

@@ -463,7 +463,7 @@ export default function Menu() {
     return menuNavigation;
 }
 
-// RM (raw material) warehouse menu for APP_MODE=warehouse, ordered by the floor workflow:
+// RM + FG warehouse menu for APP_MODE=warehouse, ordered by the floor workflow:
 // receive → store → cut/issue → count. Retail sections are not listed at all.
 function warehouseMenu(t, url) {
     const w = (key) => t(`warehouse.menu.${key}`);
@@ -482,9 +482,11 @@ function warehouseMenu(t, url) {
                     permissions: hasAnyPermission(["dashboard-access"]),
                 },
                 {
+                    // Admin floor inside the dashboard: receive / cut / issue for both RM and FG.
+                    // The tablets use /pos/rm and /pos/fg directly and are not linked from here.
                     title: w("stockFloor"),
-                    href: route("pos.index"),
-                    active: url.startsWith("/pos") || url.startsWith("/dashboard/warehouse-floor"),
+                    href: route("warehouse-floor.index"),
+                    active: url.startsWith("/dashboard/warehouse-floor"),
                     icon: icon(IconBuildingWarehouse),
                     permissions: hasAnyPermission(["stock-mutations-access"]),
                 },

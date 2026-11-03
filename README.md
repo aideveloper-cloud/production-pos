@@ -16,7 +16,7 @@ Spoolman ใช้ image `ghcr.io/donkie/spoolman` ตรงๆ (fork: [aidevelo
 
 `APP_MODE=warehouse` เปลี่ยนแอปเป็น WMS แบบ slim:
 
-- หน้างานคลัง `/pos` (แท็บเล็ต): รับเข้า (+) / ตัด (−) ปลดล็อกด้วย PIN คลัง
+- POS แท็บเล็ตแยก 2 ระบบ: `/pos/rm` วัตถุดิบ (รับเข้า / ตัด) และ `/pos/fg` สินค้าสำเร็จรูป (รับเข้า / จ่ายออก) ปลดล็อกด้วย PIN คลัง — เครื่องที่ปลดล็อกที่ POS ไหนจะอยู่ที่ POS นั้น
 - เมนูคลัง RM: วัตถุดิบ, รับเข้า/จัดซื้อ, สต็อกคลัง, ระบบ
 - เมนูขายปลีก (ขาย, CRM, ทานที่ร้าน, กะแคชเชียร์ ฯลฯ) ถูกซ่อนและ route ถูกบล็อก (404)
 - Spoolman เป็นแค่ engine น้ำหนัก/spool — ห้ามให้พนักงานเข้า UI ของ Spoolman (ไม่มี auth)
@@ -60,7 +60,7 @@ php artisan serve --host=0.0.0.0 --port=8000
 
 ```dotenv
 WMS_ADMIN_PASSWORD=...                                  # admin@wms.local
-WMS_POS_PINS=WH-PHRANON:xxxxxx,WH-DECHA-MESH:xxxxxx,WH-DECHA-POST:xxxxxx,WH-CHOKDEE:xxxxxx
+WMS_POS_PINS=WH-PHRANON:xxxx,WH-DECHA-MESH:xxxx,WH-DECHA-POST:xxxx,WH-CHOKDEE:xxxx   # PIN 4-6 หลัก ใช้ได้ทั้ง POS RM และ FG
 ```
 
 ถ้าไม่ได้ตั้ง seeder จะคงค่าเดิมไว้ และสุ่มค่าใหม่ให้เฉพาะที่ยังไม่มี (พิมพ์ออกหน้าจอครั้งเดียว)
@@ -71,7 +71,8 @@ WMS_POS_PINS=WH-PHRANON:xxxxxx,WH-DECHA-MESH:xxxxxx,WH-DECHA-POST:xxxxxx,WH-CHOK
 
 ## หน้าหลัก
 
-- `/pos` หรือ `/tablet` — เครื่อง POS แท็บเล็ต (ตัด / รับ เต็มจอ); ต้องใส่ **ชื่อผู้ทำรายการ** ทุกครั้ง
+- `/pos/rm`, `/pos/fg` — เครื่อง POS แท็บเล็ต RM / FG (เต็มจอ); ต้องใส่ **ชื่อผู้ทำรายการ** ทุกครั้ง
+  `/pos` หรือ `/tablet` จะพาไป POS ของเครื่องนั้น (ค่าเริ่มต้น RM)
 - `/login` — เข้าสู่ระบบแอดมิน
 - `/dashboard` — ภาพรวมคลัง
 - `/dashboard/stock-ledgers` — ความเคลื่อนไหวสต็อก (จาก ledger)

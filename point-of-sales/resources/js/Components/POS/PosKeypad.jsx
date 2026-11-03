@@ -1,12 +1,35 @@
 import { IconBackspace } from "@tabler/icons-react";
 
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "back"];
+const PIN_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "submit", "0", "back"];
 
-export default function PosKeypad({ value = "", onChange, disabled = false }) {
+/**
+ * Number pad. Pass `pinLength` for PIN entry: digits are kept as typed (leading zeros too),
+ * capped at `pinLength`, and the "." key becomes a submit key.
+ */
+export default function PosKeypad({
+    value = "",
+    onChange,
+    disabled = false,
+    pinLength = null,
+    onSubmit = null,
+    submitLabel = "OK",
+    submitDisabled = false,
+}) {
+    const isPin = pinLength !== null;
+
     function press(key) {
         if (disabled) return;
         if (key === "back") {
             onChange(value.slice(0, -1));
+            return;
+        }
+        if (key === "submit") {
+            if (!submitDisabled) onSubmit?.();
+            return;
+        }
+        if (isPin) {
+            if (value.length < pinLength) onChange(`${value}${key}`);
             return;
         }
         if (key === ".") {
@@ -23,17 +46,29 @@ export default function PosKeypad({ value = "", onChange, disabled = false }) {
 
     return (
         <div className="grid grid-cols-3 gap-2" role="group" aria-label="Keypad">
-            {KEYS.map((key) => (
-                <button
-                    key={key}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => press(key)}
-                    className="flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-slate-200 bg-white text-2xl font-semibold tabular-nums active:bg-slate-100 disabled:opacity-40"
-                >
-                    {key === "back" ? <IconBackspace size={24} /> : key}
-                </button>
-            ))}
+            {(isPin ? PIN_KEYS : KEYS).map((key) =>
+                key === "submit" ? (
+                    <button
+                        key={key}
+                        type="button"
+                        disabled={disabled || submitDisabled}
+                        onClick={() => press(key)}
+                        className="flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-40"
+                    >
+                        {submitLabel}
+                    </button>
+                ) : (
+                    <button
+                        key={key}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => press(key)}
+                        className="flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-slate-200 bg-white text-2xl font-semibold tabular-nums active:bg-slate-100 disabled:opacity-40"
+                    >
+                        {key === "back" ? <IconBackspace size={24} /> : key}
+                    </button>
+                )
+            )}
         </div>
     );
 }

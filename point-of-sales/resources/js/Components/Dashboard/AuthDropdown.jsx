@@ -12,7 +12,8 @@ export default function AuthDropdown({ auth, isMobile }) {
     // define usefrom
     const { post } = useForm();
     // define url from usepage
-    const { url } = usePage();
+    const { url, props } = usePage();
+    const warehouse = Boolean(props.isWarehouseMode);
 
     // define state isToggle
     const [isToggle, setIsToggle] = useState(false);
@@ -115,7 +116,7 @@ export default function AuthDropdown({ auth, isMobile }) {
                                             strokeWidth={"1.5"}
                                             size={"20"}
                                         />
-                                        Logout
+                                        {warehouse ? "ออกจากระบบ" : "Logout"}
                                     </button>
                                 </Menu.Item>
                             </div>

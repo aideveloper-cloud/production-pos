@@ -126,7 +126,8 @@ function UserCard({
 }
 
 export default function Index() {
-    const { users } = usePage().props;
+    const { users, isWarehouseMode } = usePage().props;
+    const warehouse = Boolean(isWarehouseMode);
     const { can } = useAuthorization();
     const [viewMode, setViewMode] = useState("grid");
     const canCreateUsers = can("users-create");
@@ -152,20 +153,20 @@ export default function Index() {
 
     const deleteData = async (id) => {
         Swal.fire({
-            title: "Hapus Pengguna?",
-            text: "Data yang dihapus tidak dapat dikembalikan!",
+            title: warehouse ? "ลบผู้ใช้?" : "Hapus Pengguna?",
+            text: warehouse ? "ลบแล้วกู้คืนไม่ได้" : "Data yang dihapus tidak dapat dikembalikan!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#ef4444",
             cancelButtonColor: "#64748b",
-            confirmButtonText: "Ya, Hapus!",
-            cancelButtonText: "Batal",
+            confirmButtonText: warehouse ? "ลบ" : "Ya, Hapus!",
+            cancelButtonText: warehouse ? "ยกเลิก" : "Batal",
         }).then((result) => {
             if (result.isConfirmed) {
                 destroy(route("users.destroy", [id]));
                 Swal.fire({
-                    title: "Berhasil!",
-                    text: "Data berhasil dihapus!",
+                    title: warehouse ? "ลบแล้ว" : "Berhasil!",
+                    text: warehouse ? "ลบผู้ใช้แล้ว" : "Data berhasil dihapus!",
                     icon: "success",
                     showConfirmButton: false,
                     timer: 1500,
@@ -177,18 +178,17 @@ export default function Index() {
 
     return (
         <>
-            <Head title="Pengguna" />
+            <Head title={warehouse ? "ผู้ใช้" : "Pengguna"} />
 
             {/* Header */}
             <div className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Pengguna
+                            {warehouse ? "ผู้ใช้" : "Pengguna"}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {users.total || users.data?.length || 0} pengguna
-                            terdaftar
+                            {users.total || users.data?.length || 0} {warehouse ? "คน" : "pengguna terdaftar"}
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -199,7 +199,7 @@ export default function Index() {
                                 className={
                                     "bg-danger-500 hover:bg-danger-600 text-white"
                                 }
-                                label={`Hapus ${data.selectedUser.length}`}
+                                label={warehouse ? `ลบ ${data.selectedUser.length}` : `Hapus ${data.selectedUser.length}`}
                                 onClick={() => deleteData(data.selectedUser)}
                             />
                         )}
@@ -216,7 +216,7 @@ export default function Index() {
                                 className={
                                     "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
                                 }
-                                label={"Tambah Pengguna"}
+                                label={warehouse ? "เพิ่มผู้ใช้" : "Tambah Pengguna"}
                             />
                         )}
                     </div>
@@ -228,7 +228,7 @@ export default function Index() {
                 <div className="w-full sm:w-80">
                     <Search
                         url={route("users.index")}
-                        placeholder="Cari pengguna..."
+                        placeholder={warehouse ? "ค้นหาผู้ใช้" : "Cari pengguna..."}
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -300,9 +300,9 @@ export default function Index() {
                                             />
                                         )}
                                     </Table.Th>
-                                    <Table.Th className={"w-10"}>No</Table.Th>
-                                    <Table.Th>Pengguna</Table.Th>
-                                    <Table.Th>Group Akses</Table.Th>
+                                    <Table.Th className={"w-10"}>{warehouse ? "ลำดับ" : "No"}</Table.Th>
+                                    <Table.Th>{warehouse ? "ผู้ใช้" : "Pengguna"}</Table.Th>
+                                    <Table.Th>{warehouse ? "กลุ่มสิทธิ์" : "Group Akses"}</Table.Th>
                                     <Table.Th></Table.Th>
                                 </tr>
                             </Table.Thead>
@@ -427,10 +427,10 @@ export default function Index() {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Pengguna
+                        {warehouse ? "ยังไม่มีผู้ใช้" : "Belum Ada Pengguna"}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan pengguna pertama Anda.
+                        {warehouse ? "เพิ่มผู้ใช้คนแรกเพื่อเริ่มใช้" : "Tambahkan pengguna pertama Anda."}
                     </p>
                     {canCreateUsers && (
                         <Button

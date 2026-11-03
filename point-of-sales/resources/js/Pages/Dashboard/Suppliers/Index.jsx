@@ -6,7 +6,8 @@ import toast from "react-hot-toast";
 import { useAuthorization } from "@/Utils/authorization";
 
 export default function SuppliersIndex({ suppliers = [] }) {
-    const { flash } = usePage().props;
+    const { flash, isWarehouseMode } = usePage().props;
+    const warehouse = Boolean(isWarehouseMode);
     const { can } = useAuthorization();
     const [editing, setEditing] = useState(null);
     const canManageSuppliers = can("suppliers-access");
@@ -51,22 +52,22 @@ export default function SuppliersIndex({ suppliers = [] }) {
     };
 
     const remove = (id) => {
-        if (!confirm("Hapus supplier ini?")) return;
+        if (!confirm(warehouse ? "ลบผู้จำหน่ายนี้?" : "Hapus supplier ini?")) return;
         destroy(route("suppliers.destroy", id));
     };
 
     return (
         <>
-            <Head title="Supplier" />
+            <Head title={warehouse ? "ผู้จำหน่าย" : "Supplier"} />
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <IconBuildingStore size={26} className="text-primary-500" />
-                            Supplier
+                            {warehouse ? "ผู้จำหน่าย" : "Supplier"}
                         </h1>
                         <p className="text-sm text-slate-500">
-                            Data pemasok untuk pencatatan hutang.
+                            {warehouse ? "รายชื่อที่ใช้ตอนสั่งซื้อและรับเข้า" : "Data pemasok untuk pencatatan hutang."}
                         </p>
                     </div>
                     {canManageSuppliers && (
@@ -75,7 +76,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold"
                         >
                             <IconPlus size={16} />
-                            Tambah Supplier
+                            {warehouse ? "เพิ่มผู้จำหน่าย" : "Tambah Supplier"}
                         </button>
                     )}
                 </div>
@@ -87,7 +88,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     >
                     <div className="md:col-span-1">
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Nama
+                            {warehouse ? "ชื่อ" : "Nama"}
                         </label>
                         <input
                             className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -98,7 +99,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     </div>
                     <div>
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Telepon
+                            {warehouse ? "โทร" : "Telepon"}
                         </label>
                         <input
                             className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -119,7 +120,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     </div>
                     <div className="md:col-span-1">
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Alamat
+                            {warehouse ? "ที่อยู่" : "Alamat"}
                         </label>
                         <textarea
                             rows={1}
@@ -134,7 +135,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                             disabled={processing}
                             className="px-4 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold"
                         >
-                            {editing ? "Update" : "Simpan"}
+                            {editing ? (warehouse ? "อัปเดต" : "Update") : (warehouse ? "บันทึก" : "Simpan")}
                         </button>
                         {editing && (
                             <button
@@ -142,7 +143,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                                 onClick={cancel}
                                 className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold"
                             >
-                                Batal
+                                {warehouse ? "ยกเลิก" : "Batal"}
                             </button>
                         )}
                     </div>

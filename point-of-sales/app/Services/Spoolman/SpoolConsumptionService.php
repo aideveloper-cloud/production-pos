@@ -92,7 +92,14 @@ class SpoolConsumptionService
             return $this->reject($payload, $spoolId, $qtyRaw, $uom, "Cannot convert {$uom} to {$targetUom} (set standard_weight_kg on the product).", $unit, $warehouse);
         }
 
-        return DB::transaction(function () use ($payload, $spoolId, $qtyInBase, $targetUom, $unit, $product, $warehouse) {
+        $posted = DB::transaction(function () use ($payload, $spoolId, $qtyInBase, $targetUom, $unit, $product, $warehouse) {
+            // Same rule as a floor cut: lock the unit and never take more than it holds, otherwise the
+            // ledger would move by the full qty while the unit stops at zero.
+            $unit = PhysicalUnit::query()->lockForUpdate()->findOrFail($unit->id);
+            if ($unit->status !== 'ACTIVE' || abs($qtyInBase) - (float) ($unit->actual_weight ?? 0) > 1e-6) {
+                return null;
+            }
+
             $event = SpoolmanConsumptionEvent::create([
                 'event_id' => (string) $payload['event_id'],
                 'spoolman_spool_id' => $spoolId,
@@ -151,6 +158,18 @@ class SpoolConsumptionService
             // refresh() keeps wasRecentlyCreated, which the webhook uses to tell new events from replays.
             return $event->refresh()->load(['stockLedger', 'physicalUnit']);
         });
+
+        if (! $posted) {
+            $unit->refresh();
+
+            return $this->reject(
+                $payload, $spoolId, $qtyInBase, $targetUom,
+                "Consumption {$qtyInBase} {$targetUom} exceeds what {$unit->unit_code} holds ({$unit->actual_weight}).",
+                $unit, $warehouse,
+            );
+        }
+
+        return $posted;
     }
 
     /**

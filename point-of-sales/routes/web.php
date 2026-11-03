@@ -97,25 +97,31 @@ Route::post('/portal/receivables/{receivable}/pay', [PublicPortalController::cla
 // Language switch
 Route::post('/language/switch', [LanguageController::class, 'switch'])->name('language.switch');
 
-// Tablet POS (warehouse cut/receive) — PIN unlock, full-screen
+// Tablet POS (warehouse cut/receive) — two separate POS: /pos/rm (raw material) and /pos/fg (finished goods).
+// PIN unlock, full-screen; a device unlocked on one POS stays on that POS.
 Route::get('/tablet', fn () => redirect()->route('pos.index'))->name('tablet');
-Route::get('/pos', [WarehouseFloorController::class, 'pos'])->name('pos.index');
-Route::post('/pos/unlock', [WarehouseFloorController::class, 'unlock'])
-    ->middleware('throttle:20,1')
-    ->name('pos.unlock');
+Route::get('/pos', [WarehouseFloorController::class, 'entry'])->name('pos.index');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::post('/pos/lock', [WarehouseFloorController::class, 'lock'])->name('pos.lock');
-    Route::post('/pos/lookup', [WarehouseFloorController::class, 'lookup'])
-        ->middleware('permission:stock-mutations-access')
-        ->name('pos.lookup');
-    Route::post('/pos/receive', [WarehouseFloorController::class, 'receive'])
-        ->middleware(['permission:stock-mutations-access', 'warehouse.scope'])
-        ->name('pos.receive');
-    Route::post('/pos/cut', [WarehouseFloorController::class, 'cut'])
-        ->middleware(['permission:stock-mutations-access', 'warehouse.scope'])
-        ->name('pos.cut');
+Route::prefix('/pos/{domain}')->whereIn('domain', ['rm', 'fg'])->group(function () {
+    Route::get('/', [WarehouseFloorController::class, 'pos'])->name('pos.show');
+    Route::post('/unlock', [WarehouseFloorController::class, 'unlock'])
+        ->middleware('throttle:20,1')
+        ->name('pos.unlock');
+
+    Route::middleware(['auth', 'verified', 'permission:stock-mutations-access'])->group(function () {
+        Route::post('/lookup', [WarehouseFloorController::class, 'lookup'])->name('pos.lookup');
+        Route::post('/receive', [WarehouseFloorController::class, 'receive'])
+            ->middleware('warehouse.scope')
+            ->name('pos.receive');
+        Route::post('/cut', [WarehouseFloorController::class, 'cut'])
+            ->middleware('warehouse.scope')
+            ->name('pos.cut');
+    });
 });
+
+Route::post('/pos/lock', [WarehouseFloorController::class, 'lock'])
+    ->middleware(['auth', 'verified'])
+    ->name('pos.lock');
 
 Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], function () {
     Route::post('/outlet', [OutletContextController::class, 'switch'])->name('outlet.switch');

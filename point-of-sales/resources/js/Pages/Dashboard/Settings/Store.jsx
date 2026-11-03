@@ -1,5 +1,5 @@
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import { Head, useForm } from "@inertiajs/react";
+import { Head, useForm, usePage } from "@inertiajs/react";
 import Input from "@/Components/Dashboard/Input";
 import Textarea from "@/Components/Dashboard/TextArea";
 import toast from "react-hot-toast";
@@ -17,6 +17,7 @@ import {
 } from "@tabler/icons-react";
 
 export default function Store({ settings }) {
+    const warehouse = Boolean(usePage().props.isWarehouseMode);
     const { data, setData, post, processing, errors, reset } = useForm({
         store_name: settings.store_name || "",
         store_logo: null,
@@ -45,24 +46,24 @@ export default function Store({ settings }) {
         post(route("settings.store.update"), {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success("Profil toko disimpan");
+                toast.success(warehouse ? "บันทึกข้อมูลแล้ว" : "Profil toko disimpan");
                 reset("store_logo");
             },
-            onError: () => toast.error("Gagal menyimpan profil toko"),
+            onError: () => toast.error(warehouse ? "บันทึกไม่สำเร็จ" : "Gagal menyimpan profil toko"),
         });
     };
 
     return (
         <>
-            <Head title="Profil Toko" />
+            <Head title={warehouse ? "ข้อมูลบริษัท" : "Profil Toko"} />
 
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        Pengaturan Toko
+                        {warehouse ? "ข้อมูลบริษัท" : "Pengaturan Toko"}
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Atur identitas toko yang muncul di struk dan laporan.
+                        {warehouse ? "ชื่อและที่อยู่ที่แสดงบนเอกสาร" : "Atur identitas toko yang muncul di struk dan laporan."}
                     </p>
                 </div>
 
@@ -72,7 +73,7 @@ export default function Store({ settings }) {
                         <div className="lg:w-1/3">
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                                 <IconPhoto size={18} />
-                                Logo Toko
+                                {warehouse ? "โลโก้" : "Logo Toko"}
                             </label>
                             <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden mb-3">
                                 {logoPreview ? (
@@ -108,14 +109,14 @@ export default function Store({ settings }) {
                         {/* Info */}
                         <div className="lg:flex-1 space-y-4">
                             <Input
-                                label="Nama Toko"
+                                label={warehouse ? "ชื่อ" : "Nama Toko"}
                                 value={data.store_name}
                                 errors={errors.store_name}
                                 onChange={(e) => setData("store_name", e.target.value)}
-                                placeholder="Nama toko"
+                                placeholder={warehouse ? "ชื่อบริษัท" : "Nama toko"}
                             />
                             <Textarea
-                                label="Alamat Lengkap"
+                                label={warehouse ? "ที่อยู่" : "Alamat Lengkap"}
                                 value={data.store_address}
                                 errors={errors.store_address}
                                 onChange={(e) => setData("store_address", e.target.value)}
@@ -123,7 +124,7 @@ export default function Store({ settings }) {
                             />
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Input
-                                    label="Kota/Kabupaten"
+                                    label={warehouse ? "จังหวัด / อำเภอ" : "Kota/Kabupaten"}
                                     value={data.store_city}
                                     errors={errors.store_city}
                                     onChange={(e) => setData("store_city", e.target.value)}

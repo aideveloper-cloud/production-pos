@@ -6,11 +6,12 @@ import Search from "@/Components/Dashboard/Search";
 import Pagination from "@/Components/Dashboard/Pagination";
 
 export default function Index() {
-    const { permissions } = usePage().props;
+    const { permissions, isWarehouseMode } = usePage().props;
+    const warehouse = Boolean(isWarehouseMode);
 
     return (
         <>
-            <Head title="Hak Akses" />
+            <Head title={warehouse ? "สิทธิ์" : "Hak Akses"} />
 
             {/* Header */}
             <div className="mb-6">
@@ -18,11 +19,11 @@ export default function Index() {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <IconKey size={28} className="text-primary-500" />
-                            Hak Akses
+                            {warehouse ? "สิทธิ์การใช้งาน" : "Hak Akses"}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {permissions.total || permissions.data?.length || 0}{" "}
-                            hak akses terdaftar
+                            {warehouse ? "สิทธิ์" : "hak akses terdaftar"}
                         </p>
                     </div>
                 </div>
@@ -32,7 +33,7 @@ export default function Index() {
             <div className="mb-4 w-full sm:w-80">
                 <Search
                     url={route("permissions.index")}
-                    placeholder="Cari hak akses..."
+                    placeholder={warehouse ? "ค้นหาสิทธิ์" : "Cari hak akses..."}
                 />
             </div>
 
@@ -68,10 +69,10 @@ export default function Index() {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Hak Akses
+                        {warehouse ? "ยังไม่มีสิทธิ์" : "Belum Ada Hak Akses"}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Hak akses tidak ditemukan.
+                        {warehouse ? "ไม่พบสิทธิ์ที่ค้นหา" : "Hak akses tidak ditemukan."}
                     </p>
                 </div>
             )}

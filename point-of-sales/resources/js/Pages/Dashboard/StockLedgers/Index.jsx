@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import Table from "@/Components/Dashboard/Table";
 import Pagination from "@/Components/Dashboard/Pagination";
 import ExportMenu from "@/Components/Dashboard/ExportMenu";
+import DomainFilter, { DomainBadge } from "@/Components/Dashboard/DomainFilter";
 import hasAnyPermission from "@/Utils/Permission";
 import { IconArrowDownRight, IconArrowUpRight, IconHistory, IconSearch } from "@tabler/icons-react";
 
@@ -35,12 +36,16 @@ export default function Index({ ledgers, totals, filters, warehouses = [], produ
             : "-";
 
     const updateFilter = (key, value) => {
-        router.get(
-            route("stock-ledgers.index"),
-            { ...filters, [key]: value },
-            { preserveState: true, replace: true }
-        );
+        const next = { ...filters, [key]: value };
+        // A product picked under RM disappears from the FG list, so drop it when switching.
+        if (key === "domain" && value && next.product_id) {
+            const picked = products.find((p) => String(p.id) === String(next.product_id));
+            if (picked && picked.domain !== value) next.product_id = "";
+        }
+        router.get(route("stock-ledgers.index"), next, { preserveState: true, replace: true });
     };
+
+    const visibleProducts = filters.domain ? products.filter((p) => p.domain === filters.domain) : products;
 
     const referenceLabel = (ledger) =>
         t(`stockLedger.references.${ledger.reference_type}`, { defaultValue: ledger.reference_type || "-" });
@@ -57,10 +62,12 @@ export default function Index({ ledgers, totals, filters, warehouses = [], produ
                 {hasAnyPermission(["products-export"]) && (
                     <div className="flex flex-wrap items-center gap-2">
                         <ExportMenu routeName="export.warehouse.stock-ledgers" params={filters} label={t("exportMenu.movements")} />
-                        <ExportMenu routeName="export.warehouse.balances" params={{ warehouse_id: filters.warehouse_id }} label={t("exportMenu.balances")} />
+                        <ExportMenu routeName="export.warehouse.balances" params={{ warehouse_id: filters.warehouse_id, domain: filters.domain }} label={t("exportMenu.balances")} />
                     </div>
                 )}
             </div>
+
+            <DomainFilter className="mb-3" value={filters.domain || ""} onChange={(value) => updateFilter("domain", value)} />
 
             <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3 xl:grid-cols-6">
                 <select value={filters.warehouse_id || ""} onChange={(e) => updateFilter("warehouse_id", e.target.value)} className={inputClass}>
@@ -74,7 +81,7 @@ export default function Index({ ledgers, totals, filters, warehouses = [], produ
 
                 <select value={filters.product_id || ""} onChange={(e) => updateFilter("product_id", e.target.value)} className={inputClass}>
                     <option value="">{t("stockLedger.filters.allMaterials")}</option>
-                    {products.map((p) => (
+                    {visibleProducts.map((p) => (
                         <option key={p.id} value={p.id}>
                             {p.sku} — {p.title}
                         </option>
@@ -139,7 +146,10 @@ export default function Index({ ledgers, totals, filters, warehouses = [], produ
                                     <tr key={ledger.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <Table.Td className="whitespace-nowrap text-sm">{formatDateTime(ledger.posted_at)}</Table.Td>
                                         <Table.Td>
-                                            <p className="font-medium text-slate-800 dark:text-slate-200">{ledger.product?.sku || "-"}</p>
+                                            <p className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                                <DomainBadge domain={ledger.product?.domain} />
+                                                {ledger.product?.sku || "-"}
+                                            </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">{ledger.product?.title}</p>
                                             {ledger.physical_unit && (
                                                 <p className="mt-0.5 font-mono text-xs text-slate-400">

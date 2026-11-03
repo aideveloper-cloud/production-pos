@@ -26,19 +26,19 @@ class CompanyUserSeederTest extends TestCase
     public function credentials_come_from_env(): void
     {
         putenv('WMS_ADMIN_PASSWORD=Str0ng-Admin-Pass');
-        putenv('WMS_POS_PINS=WH-PHRANON:482913');
+        putenv('WMS_POS_PINS=WH-PHRANON:4829');
 
         $this->seed(CompanyUserSeeder::class);
 
         $this->assertTrue(Hash::check('Str0ng-Admin-Pass', User::where('email', 'admin@wms.local')->value('password')));
-        $this->assertTrue(Hash::check('482913', Warehouse::where('code', 'WH-PHRANON')->value('pos_pin')));
+        $this->assertTrue(Hash::check('4829', Warehouse::where('code', 'WH-PHRANON')->value('pos_pin')));
     }
 
     #[Test]
     public function rerunning_without_env_keeps_existing_password_and_pins(): void
     {
         putenv('WMS_ADMIN_PASSWORD=Str0ng-Admin-Pass');
-        putenv('WMS_POS_PINS=WH-PHRANON:482913');
+        putenv('WMS_POS_PINS=WH-PHRANON:4829');
         $this->seed(CompanyUserSeeder::class);
 
         putenv('WMS_ADMIN_PASSWORD');
@@ -46,6 +46,6 @@ class CompanyUserSeederTest extends TestCase
         $this->seed(CompanyUserSeeder::class);
 
         $this->assertTrue(Hash::check('Str0ng-Admin-Pass', User::where('email', 'admin@wms.local')->value('password')));
-        $this->assertTrue(Hash::check('482913', Warehouse::where('code', 'WH-PHRANON')->value('pos_pin')));
+        $this->assertTrue(Hash::check('4829', Warehouse::where('code', 'WH-PHRANON')->value('pos_pin')));
     }
 }

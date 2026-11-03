@@ -22,7 +22,7 @@ class MaterialsExport extends WarehouseExport implements FromCollection
     /**
      * @param  array<int, int>  $warehouseIds
      */
-    public function __construct(array $warehouseIds)
+    public function __construct(array $warehouseIds, private readonly ?string $domain = null)
     {
         $this->warehouses = Warehouse::query()->whereIn('id', $warehouseIds ?: [0])->orderBy('sort_order')->orderBy('code')->get(['id', 'code']);
         $this->balances = StockBalances::forWarehouses($this->warehouses->pluck('id')->all());
@@ -33,7 +33,11 @@ class MaterialsExport extends WarehouseExport implements FromCollection
 
     public function collection(): Collection
     {
-        return Product::query()->with('category:id,name')->orderBy('sku')->get();
+        return Product::query()
+            ->with('category:id,name')
+            ->when($this->domain, fn ($q, $domain) => $q->where('domain', $domain))
+            ->orderBy('sku')
+            ->get();
     }
 
     protected function group(): string

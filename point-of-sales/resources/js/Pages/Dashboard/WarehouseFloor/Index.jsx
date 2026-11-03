@@ -18,6 +18,7 @@ export default function WarehouseFloorIndex({
     const { t } = useTranslation();
     const flash = usePage().props.flash;
     const [mode, setMode] = useState("cut"); // cut | receive
+    const [domainFilter, setDomainFilter] = useState("");
     const [selectedUnitId, setSelectedUnitId] = useState(null);
     const [filter, setFilter] = useState("");
 
@@ -28,14 +29,17 @@ export default function WarehouseFloorIndex({
 
     const filteredUnits = useMemo(() => {
         const q = filter.trim().toLowerCase();
-        if (!q) return units;
-        return units.filter(
-            (u) =>
+        return units.filter((u) => {
+            if (domainFilter && u.domain !== domainFilter) return false;
+            if (!q) return true;
+            return (
                 u.unit_code?.toLowerCase().includes(q) ||
                 u.sku?.toLowerCase().includes(q) ||
-                u.product_title?.toLowerCase().includes(q)
-        );
-    }, [units, filter]);
+                u.product_title?.toLowerCase().includes(q) ||
+                u.warehouse_name?.toLowerCase().includes(q)
+            );
+        });
+    }, [units, filter, domainFilter]);
 
     const cutForm = useForm({
         physical_unit_id: null,
@@ -46,8 +50,11 @@ export default function WarehouseFloorIndex({
         warehouse_id: currentWarehouseId,
     });
 
+    const allWarehouses = !currentWarehouseId;
+    const shortName = (name) => (name || "").replace(/^โกดัง\s*/, "");
+
     const receiveForm = useForm({
-        warehouse_id: currentWarehouseId,
+        warehouse_id: currentWarehouseId || "",
         product_id: "",
         qty: "",
         uom: "KG",
@@ -61,7 +68,7 @@ export default function WarehouseFloorIndex({
     function switchWarehouse(id) {
         router.get(
             route("warehouse-floor.index"),
-            { warehouse_id: id },
+            { warehouse_id: id ?? "all" },
             { preserveState: false }
         );
     }
@@ -75,7 +82,7 @@ export default function WarehouseFloorIndex({
             uom: unit.weight_uom || unit.base_uom || "KG",
             operator_name: cutForm.data.operator_name || operatorName,
             notes: "",
-            warehouse_id: currentWarehouseId,
+            warehouse_id: unit.warehouse_id,
         });
     }
 
@@ -90,8 +97,28 @@ export default function WarehouseFloorIndex({
         });
     }
 
+    function pickProduct(productId) {
+        const product = products.find((p) => String(p.id) === String(productId));
+        const own = product?.warehouse_ids || [];
+        const keep = own.map(String).includes(String(receiveForm.data.warehouse_id));
+        receiveForm.setData({
+            ...receiveForm.data,
+            product_id: productId,
+            // Receive in the product's own unit (ROLL, PCS, SHEET…); KG only converts to weight units.
+            uom: product?.base_uom || "KG",
+            warehouse_id: currentWarehouseId || (keep ? receiveForm.data.warehouse_id : own.length === 1 ? own[0] : receiveForm.data.warehouse_id),
+        });
+    }
+
+    // Every server-side error, so a refused receive/cut is never silent.
+    const errorList = (errors) => [...new Set(Object.values(errors || {}).filter(Boolean))];
+
     function submitReceive(e) {
         e.preventDefault();
+        if (!receiveForm.data.warehouse_id) {
+            receiveForm.setError("warehouse_id", t("warehouse.floor.selectWarehouseFirst", { defaultValue: "กรุณาเลือกคลังที่จะรับเข้า" }));
+            return;
+        }
         receiveForm.post(route("warehouse-floor.receive"), {
             preserveScroll: true,
             onSuccess: () => {
@@ -119,6 +146,19 @@ export default function WarehouseFloorIndex({
                         <p className="text-sm text-slate-500">{t("warehouse.floor.subtitle")}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        {warehouses.length > 1 && (
+                            <button
+                                type="button"
+                                onClick={() => switchWarehouse(null)}
+                                className={`rounded-xl px-3 py-2 text-sm font-medium ${
+                                    allWarehouses
+                                        ? "bg-slate-900 text-white"
+                                        : "bg-white text-slate-700 ring-1 ring-slate-200"
+                                }`}
+                            >
+                                {t("warehouse.floor.allWarehouses", { defaultValue: "ทุกคลัง" })}
+                            </button>
+                        )}
                         {warehouses.map((wh) => (
                             <button
                                 key={wh.id}
@@ -131,7 +171,7 @@ export default function WarehouseFloorIndex({
                                         : "bg-white text-slate-700 ring-1 ring-slate-200"
                                 }`}
                             >
-                                {wh.name.replace(/^โกดัง\s*/, "")}
+                                {shortName(wh.name)}
                             </button>
                         ))}
                     </div>
@@ -153,14 +193,14 @@ export default function WarehouseFloorIndex({
                                 : "bg-white ring-1 ring-slate-200"
                         }`}
                     >
-                        <IconMinus size={16} /> {t("warehouse.floor.cut")}
+                        <IconMinus size={16} /> {domainFilter === "FG" || selectedUnit?.domain === "FG" ? t("warehouse.floor.issue", { defaultValue: "จ่ายออก" }) : t("warehouse.floor.cut")}
                     </button>
                     <button
                         type="button"
                         onClick={() => {
                             setMode("receive");
                             setSelectedUnitId(null);
-                            receiveForm.setData("warehouse_id", currentWarehouseId);
+                            receiveForm.setData("warehouse_id", currentWarehouseId || receiveForm.data.warehouse_id || "");
                         }}
                         className={`inline-flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-medium ${
                             mode === "receive"
@@ -174,13 +214,31 @@ export default function WarehouseFloorIndex({
 
                 <div className="grid gap-4 lg:grid-cols-5">
                     <div className="lg:col-span-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="border-b border-slate-100 p-4">
+                        <div className="border-b border-slate-100 space-y-3 p-4">
                             <input
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
                                 placeholder={t("warehouse.floor.searchPlaceholder")}
                                 className="w-full rounded-xl border-slate-200 text-base"
                             />
+                            <div className="flex gap-2">
+                                {[
+                                    ["", t("warehouse.floor.domainAll", { defaultValue: "ทั้งหมด" })],
+                                    ["RM", "RM"],
+                                    ["FG", "FG"],
+                                ].map(([value, label]) => (
+                                    <button
+                                        key={value || "all"}
+                                        type="button"
+                                        onClick={() => setDomainFilter(value)}
+                                        className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${
+                                            domainFilter === value ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
+                                        }`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                         <ul className="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
                             {filteredUnits.length === 0 && (
@@ -192,6 +250,7 @@ export default function WarehouseFloorIndex({
                                 <li key={unit.id}>
                                     <button
                                         type="button"
+                                        data-unit-code={unit.unit_code}
                                         onClick={() => selectUnit(unit)}
                                         className={`flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50 ${
                                             selectedUnitId === unit.id ? "bg-slate-100" : ""
@@ -199,11 +258,16 @@ export default function WarehouseFloorIndex({
                                     >
                                         <div>
                                             <p className="font-semibold text-slate-900">
-                                                {unit.unit_code}
+                                                {unit.domain ? `${unit.domain} · ` : ""}{unit.unit_code}
                                             </p>
                                             <p className="text-sm text-slate-500">
                                                 {unit.sku} — {unit.product_title}
                                             </p>
+                                            {allWarehouses && unit.warehouse_name && (
+                                                <p className="mt-0.5 text-xs font-medium text-slate-400">
+                                                    {shortName(unit.warehouse_name)}
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="text-right">
                                             <p className="text-lg font-semibold tabular-nums">
@@ -231,6 +295,9 @@ export default function WarehouseFloorIndex({
                                     <>
                                         <div className="rounded-xl bg-slate-50 p-3 text-sm">
                                             <p className="font-medium">{selectedUnit.unit_code}</p>
+                                            {selectedUnit.warehouse_name && (
+                                                <p className="text-slate-500">{selectedUnit.warehouse_name}</p>
+                                            )}
                                             <p className="text-slate-500">
                                                 {t("warehouse.floor.remaining")}:{" "}
                                                 {selectedUnit.actual_weight}{" "}
@@ -280,22 +347,19 @@ export default function WarehouseFloorIndex({
                                                 className="w-full rounded-xl border-slate-200"
                                             />
                                         </label>
-                                        {cutForm.errors.qty && (
-                                            <p className="text-sm text-rose-600">
-                                                {cutForm.errors.qty}
+                                        {errorList(cutForm.errors).map((message) => (
+                                            <p key={message} className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                                                {message}
                                             </p>
-                                        )}
-                                        {cutForm.errors.operator_name && (
-                                            <p className="text-sm text-rose-600">
-                                                {cutForm.errors.operator_name}
-                                            </p>
-                                        )}
+                                        ))}
                                         <button
                                             type="submit"
                                             disabled={cutForm.processing}
                                             className="w-full rounded-xl bg-rose-600 py-3 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
                                         >
-                                            {t("warehouse.floor.confirmCut")}
+                                            {selectedUnit?.domain === "FG"
+                                                ? t("warehouse.floor.confirmIssue", { defaultValue: "ยืนยันจ่ายออก" })
+                                                : t("warehouse.floor.confirmCut")}
                                         </button>
                                     </>
                                 )}
@@ -305,6 +369,27 @@ export default function WarehouseFloorIndex({
                                 <h2 className="text-lg font-semibold">
                                     {t("warehouse.floor.receive")}
                                 </h2>
+                                {allWarehouses && (
+                                    <label className="block text-sm">
+                                        <span className="mb-1 block text-slate-600">
+                                            {t("warehouse.floor.receiveInto", { defaultValue: "รับเข้าคลัง" })}
+                                        </span>
+                                        <select
+                                            value={receiveForm.data.warehouse_id}
+                                            onChange={(e) => receiveForm.setData("warehouse_id", e.target.value)}
+                                            className="w-full rounded-xl border-slate-200"
+                                        >
+                                            <option value="">
+                                                {t("warehouse.floor.selectWarehouse", { defaultValue: "เลือกคลัง" })}
+                                            </option>
+                                            {warehouses.map((wh) => (
+                                                <option key={wh.id} value={wh.id}>
+                                                    {wh.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                )}
                                 <label className="block text-sm">
                                     <span className="mb-1 block text-slate-600">
                                         {t("warehouse.floor.product")}
@@ -312,15 +397,15 @@ export default function WarehouseFloorIndex({
                                     <select
                                         required
                                         value={receiveForm.data.product_id}
-                                        onChange={(e) =>
-                                            receiveForm.setData("product_id", e.target.value)
-                                        }
+                                        onChange={(e) => pickProduct(e.target.value)}
                                         className="w-full rounded-xl border-slate-200"
                                     >
                                         <option value="">{t("warehouse.floor.selectSku")}</option>
-                                        {products.map((p) => (
+                                        {products
+                                            .filter((p) => !domainFilter || p.domain === domainFilter)
+                                            .map((p) => (
                                             <option key={p.id} value={p.id}>
-                                                {p.sku} — {p.title}
+                                                {p.domain ? `${p.domain} · ` : ""}{p.sku} — {p.title}
                                             </option>
                                         ))}
                                     </select>
@@ -329,17 +414,22 @@ export default function WarehouseFloorIndex({
                                     <span className="mb-1 block text-slate-600">
                                         {t("warehouse.floor.qtyWeight")}
                                     </span>
-                                    <input
-                                        type="number"
-                                        step="any"
-                                        min="0"
-                                        required
-                                        value={receiveForm.data.qty}
-                                        onChange={(e) =>
-                                            receiveForm.setData("qty", e.target.value)
-                                        }
-                                        className="w-full rounded-xl border-slate-200 text-xl"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            min="0"
+                                            required
+                                            value={receiveForm.data.qty}
+                                            onChange={(e) =>
+                                                receiveForm.setData("qty", e.target.value)
+                                            }
+                                            className="w-full rounded-xl border-slate-200 text-xl"
+                                        />
+                                        <span className="shrink-0 text-sm font-semibold text-slate-500">
+                                            {receiveForm.data.uom}
+                                        </span>
+                                    </div>
                                 </label>
                                 <div className="flex flex-wrap gap-2">
                                     {presetsKg.map((p) => (
@@ -364,7 +454,7 @@ export default function WarehouseFloorIndex({
                                         onChange={(e) =>
                                             receiveForm.setData("unit_code", e.target.value)
                                         }
-                                        placeholder="SP-000123"
+                                        placeholder={t("warehouse.floor.unitCodeAuto", { defaultValue: "เว้นว่าง = สร้างรหัสใหม่อัตโนมัติ" })}
                                         className="w-full rounded-xl border-slate-200"
                                     />
                                 </label>
@@ -395,14 +485,11 @@ export default function WarehouseFloorIndex({
                                         className="w-full rounded-xl border-slate-200"
                                     />
                                 </label>
-                                {receiveForm.errors.qty && (
-                                    <p className="text-sm text-rose-600">{receiveForm.errors.qty}</p>
-                                )}
-                                {receiveForm.errors.operator_name && (
-                                    <p className="text-sm text-rose-600">
-                                        {receiveForm.errors.operator_name}
+                                {errorList(receiveForm.errors).map((message) => (
+                                    <p key={message} className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                                        {message}
                                     </p>
-                                )}
+                                ))}
                                 <button
                                     type="submit"
                                     disabled={receiveForm.processing}

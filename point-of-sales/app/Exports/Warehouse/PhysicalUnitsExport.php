@@ -16,15 +16,17 @@ class PhysicalUnitsExport extends WarehouseExport implements FromQuery
         private readonly array $warehouseIds,
         private readonly ?int $warehouseId = null,
         private readonly ?string $status = null,
+        private readonly ?string $domain = null,
     ) {}
 
     public function query(): Builder
     {
         return PhysicalUnit::query()
-            ->with(['product:id,sku,title,base_uom,standard_weight_kg', 'warehouse:id,code,name'])
+            ->with(['product:id,sku,title,domain,base_uom,standard_weight_kg', 'warehouse:id,code,name'])
             ->whereIn('warehouse_id', $this->warehouseIds ?: [0])
             ->when($this->warehouseId, fn (Builder $q, $id) => $q->where('warehouse_id', $id))
             ->when($this->status, fn (Builder $q, $status) => $q->where('status', $status))
+            ->when($this->domain, fn (Builder $q, $domain) => $q->whereHas('product', fn (Builder $p) => $p->where('domain', $domain)))
             ->orderBy('warehouse_id')
             ->orderBy('unit_code');
     }
@@ -36,7 +38,7 @@ class PhysicalUnitsExport extends WarehouseExport implements FromQuery
 
     protected function columns(): array
     {
-        return ['unit_code', 'sku', 'title', 'warehouse', 'lot', 'type', 'status', 'remaining', 'uom', 'weight_kg', 'spoolman_spool', 'opened_at', 'depleted_at'];
+        return ['unit_code', 'sku', 'title', 'domain', 'warehouse', 'lot', 'type', 'status', 'remaining', 'uom', 'weight_kg', 'spoolman_spool', 'opened_at', 'depleted_at'];
     }
 
     /** @param  PhysicalUnit  $unit */
@@ -55,6 +57,7 @@ class PhysicalUnitsExport extends WarehouseExport implements FromQuery
             $unit->unit_code,
             $unit->product?->sku,
             $unit->product?->title,
+            $unit->product?->domain,
             $unit->warehouse?->code,
             $unit->lot_code,
             $unit->unit_type,

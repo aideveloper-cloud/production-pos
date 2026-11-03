@@ -12,11 +12,12 @@ use Illuminate\Http\Request;
 final class StockLedgerFilter
 {
     /**
-     * @return array{warehouse_id: mixed, product_id: mixed, movement_type: mixed, date_from: mixed, date_to: mixed, search: string}
+     * @return array{domain: ?string, warehouse_id: mixed, product_id: mixed, movement_type: mixed, date_from: mixed, date_to: mixed, search: string}
      */
     public static function fromRequest(Request $request): array
     {
         return [
+            'domain' => self::domain($request->input('domain')),
             'warehouse_id' => $request->input('warehouse_id'),
             'product_id' => $request->input('product_id'),
             'movement_type' => $request->input('movement_type'),
@@ -24,6 +25,14 @@ final class StockLedgerFilter
             'date_to' => $request->input('date_to'),
             'search' => trim((string) $request->input('search', '')),
         ];
+    }
+
+    /** RM or FG from a request value; anything else means "both". */
+    public static function domain(mixed $value): ?string
+    {
+        $domain = strtoupper(trim((string) $value));
+
+        return in_array($domain, ['RM', 'FG'], true) ? $domain : null;
     }
 
     /**
@@ -34,6 +43,7 @@ final class StockLedgerFilter
     {
         return $query
             ->whereIn('warehouse_id', $allowedWarehouseIds ?: [0])
+            ->when($filters['domain'] ?? null, fn (Builder $q, $domain) => $q->whereHas('product', fn (Builder $p) => $p->where('domain', $domain)))
             ->when($filters['warehouse_id'] ?? null, fn (Builder $q, $id) => $q->where('warehouse_id', (int) $id))
             ->when($filters['product_id'] ?? null, fn (Builder $q, $id) => $q->where('product_id', (int) $id))
             ->when($filters['movement_type'] ?? null, fn (Builder $q, $type) => $q->where('movement_type', $type))

@@ -1061,10 +1061,19 @@
             "qty": "Qty",
             "weight": "Weight",
             "operator": "Operator",
-            "emptyMovements": "No ledger movements yet — use Stock Floor to receive or cut."
+            "emptyMovements": "No ledger movements yet — use Stock Floor to receive or cut.",
+            "today": "Today",
+            "rawMaterial": "Raw material (RM)",
+            "finishedGoods": "Finished goods (FG)",
+            "received": "Received",
+            "issued": "Issued",
+            "issuedFg": "Issued",
+            "moves": "moves",
+            "emptySkus": "Out of stock",
+            "noEmpty": "None empty"
         },
         "menu": {
-            "stockFloor": "Stock Floor (Receive / Cut)",
+            "stockFloor": "Stock Floor RM / FG (Receive / Cut / Issue)",
             "labels": "Unit / Roll Labels",
             "sections": {
                 "overview": "Warehouse Overview",
@@ -1079,7 +1088,7 @@
             "units": "Units",
             "suppliers": "Suppliers",
             "purchaseOrders": "Purchase Orders",
-            "goodsReceiving": "Receive Materials",
+            "goodsReceiving": "Goods Receiving (RM / FG)",
             "supplierReturns": "Supplier Returns",
             "stockMovements": "Stock Movements",
             "stockTransfers": "Warehouse Transfers",
@@ -1093,14 +1102,18 @@
         },
         "labels": {
             "title": "Unit Labels",
-            "subtitle": "Create and print barcode labels for warehouse units",
-            "printSelected": "Print selected",
+            "subtitle": "Create a QR and print unit labels for tablet scanning",
+            "printSelected": "Create QR / print",
             "printTitle": "Print unit labels",
             "allWarehouses": "All warehouses",
             "search": "Search unit code / SKU…",
             "empty": "No units — receive stock on POS first"
         },
         "pos": {
+            "unlockSubmit": "OK",
+            "noProductMatch": "No matching products.",
+            "emptyProductsFg": "No finished goods (FG) to receive yet — add FG products first.",
+            "emptyProductsRm": "No raw materials (RM) to receive yet — add RM products first.",
             "brand": "Warehouse POS",
             "loginTitle": "Open Warehouse POS",
             "loginDescription": "Sign in to open cut / receive immediately",

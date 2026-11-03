@@ -37,7 +37,7 @@ class StockLedgerController extends Controller
 
         $ledgers = $query
             ->with([
-                'product:id,sku,title,base_uom',
+                'product:id,sku,title,base_uom,domain',
                 'warehouse:id,code,name',
                 'physicalUnit:id,unit_code,lot_code',
                 'creator:id,name',
@@ -56,7 +56,7 @@ class StockLedgerController extends Controller
             ],
             'filters' => $filters,
             'warehouses' => $warehouses->map->only(['id', 'code', 'name'])->values(),
-            'products' => Product::query()->orderBy('sku')->get(['id', 'sku', 'title']),
+            'products' => Product::query()->orderBy('sku')->get(['id', 'sku', 'title', 'domain']),
             'movementTypes' => array_map(fn (StockLedgerMovement $type) => $type->value, StockLedgerMovement::cases()),
         ]);
     }

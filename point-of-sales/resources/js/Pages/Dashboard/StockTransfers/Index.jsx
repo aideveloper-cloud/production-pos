@@ -11,14 +11,16 @@ const formatDateTime = (value) => {
     return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 };
 
-const statusBadge = (status) => {
+const statusBadge = (status, warehouse = false) => {
     const styles = {
         draft: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
         in_transit: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
         completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
         cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400",
     };
-    const labels = { draft: "Draft", in_transit: "In Transit", completed: "Selesai", cancelled: "Batal" };
+    const labels = warehouse
+        ? { draft: "ร่าง", in_transit: "กำลังโอน", completed: "เสร็จสิ้น", cancelled: "ยกเลิก" }
+        : { draft: "Draft", in_transit: "In Transit", completed: "Selesai", cancelled: "Batal" };
     return (
         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${styles[status] || styles.draft}`}>
             {labels[status] || status}
@@ -28,20 +30,21 @@ const statusBadge = (status) => {
 
 export default function Index({ transfers }) {
     const { can } = useAuthorization();
+    const warehouse = Boolean(usePage().props.isWarehouseMode);
 
     return (
         <>
-            <Head title="Transfer Stok" />
+            <Head title={warehouse ? "โอนย้ายระหว่างคลัง" : "Transfer Stok"} />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
                             <IconArrowsLeftRight size={28} className="text-primary-500" />
-                            Transfer Stok
+                            {warehouse ? "โอนย้ายระหว่างคลัง" : "Transfer Stok"}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Kelola transfer stok antar gudang / cabang
+                            {warehouse ? "ย้ายสต็อกจากคลังหนึ่งไปอีกคลัง" : "Kelola transfer stok antar gudang / cabang"}
                         </p>
                     </div>
                     {can("stock-transfers-create") && (
@@ -50,22 +53,22 @@ export default function Index({ transfers }) {
                             className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/30 transition-colors hover:bg-primary-600"
                         >
                             <IconPlus size={18} />
-                            Transfer Baru
+                            {warehouse ? "สร้างใบโอน" : "Transfer Baru"}
                         </Link>
                     )}
                 </div>
 
-                <Table.Card title="Daftar Transfer Stok">
+                <Table.Card title={warehouse ? "รายการโอนย้าย" : "Daftar Transfer Stok"}>
                     <Table>
                         <Table.Thead>
                             <tr>
-                                <Table.Th>Dokumen</Table.Th>
-                                <Table.Th>Asal</Table.Th>
-                                <Table.Th>Tujuan</Table.Th>
-                                <Table.Th>Status</Table.Th>
-                                <Table.Th>Item</Table.Th>
-                                <Table.Th>Dibuat</Table.Th>
-                                <Table.Th className="w-24 text-center">Aksi</Table.Th>
+                                <Table.Th>{warehouse ? "เอกสาร" : "Dokumen"}</Table.Th>
+                                <Table.Th>{warehouse ? "ต้นทาง" : "Asal"}</Table.Th>
+                                <Table.Th>{warehouse ? "ปลายทาง" : "Tujuan"}</Table.Th>
+                                <Table.Th>{warehouse ? "สถานะ" : "Status"}</Table.Th>
+                                <Table.Th>{warehouse ? "รายการ" : "Item"}</Table.Th>
+                                <Table.Th>{warehouse ? "สร้างเมื่อ" : "Dibuat"}</Table.Th>
+                                <Table.Th className="w-24 text-center">{warehouse ? "จัดการ" : "Aksi"}</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -77,7 +80,7 @@ export default function Index({ transfers }) {
                                         </Table.Td>
                                         <Table.Td>{t.source_warehouse?.name || "-"}</Table.Td>
                                         <Table.Td>{t.destination_warehouse?.name || "-"}</Table.Td>
-                                        <Table.Td>{statusBadge(t.status)}</Table.Td>
+                                        <Table.Td>{statusBadge(t.status, warehouse)}</Table.Td>
                                         <Table.Td>{t.items_count}</Table.Td>
                                         <Table.Td>{formatDateTime(t.created_at)}</Table.Td>
                                         <Table.Td className="text-center">
@@ -91,7 +94,7 @@ export default function Index({ transfers }) {
                                     </tr>
                                 ))
                             ) : (
-                                <Table.Empty colSpan={7} message={<div className="text-slate-500 dark:text-slate-400">Belum ada transfer stok.</div>} />
+                                <Table.Empty colSpan={7} message={<div className="text-slate-500 dark:text-slate-400">{warehouse ? "ยังไม่มีรายการโอนย้าย" : "Belum ada transfer stok."}</div>} />
                             )}
                         </Table.Tbody>
                     </Table>

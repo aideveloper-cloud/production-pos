@@ -18,7 +18,7 @@ import {
     IconRulerMeasure,
 } from "@tabler/icons-react";
 
-export default function Create({ categories, products, units = [] }) {
+function RetailCreate({ categories, products, units = [] }) {
     const { errors } = usePage().props;
 
     const { data, setData, post, processing } = useForm({
@@ -27,6 +27,8 @@ export default function Create({ categories, products, units = [] }) {
         sku: "",
         title: "",
         category_id: "",
+        domain: "FG",
+        base_uom: "PCS",
         description: "",
         buy_price: "",
         sell_price: "",
@@ -224,6 +226,21 @@ export default function Create({ categories, products, units = [] }) {
                                 Informasi Dasar
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label className="text-sm text-slate-700 dark:text-slate-300">
+                                    ประเภทสินค้า
+                                    <select className="block w-full rounded-lg mt-2 dark:bg-slate-800" value={data.domain} onChange={(e) => setData("domain", e.target.value)}>
+                                        <option value="RM">RM — วัตถุดิบ</option>
+                                        <option value="FG">FG — สินค้าสำเร็จรูป</option>
+                                    </select>
+                                    {errors.domain && <span className="text-danger-500">{errors.domain}</span>}
+                                </label>
+                                <label className="text-sm text-slate-700 dark:text-slate-300">
+                                    หน่วยสต็อกหลัก
+                                    <select className="block w-full rounded-lg mt-2 dark:bg-slate-800" value={data.base_uom} onChange={(e) => setData("base_uom", e.target.value)}>
+                                        {["PCS", "KG", "M", "ROLL", "BOX", "SET"].map((uom) => <option key={uom} value={uom}>{uom}</option>)}
+                                    </select>
+                                    {errors.base_uom && <span className="text-danger-500">{errors.base_uom}</span>}
+                                </label>
                                 <div className="md:col-span-2">
                                     <InputSelect
                                         label="Kategori"
@@ -762,6 +779,229 @@ export default function Create({ categories, products, units = [] }) {
             </form>
         </>
     );
+}
+
+const COUNT_UNITS = [
+    { value: "เส้น", hint: "ท่อ เหล็กกลม แป๊บ" },
+    { value: "ชิ้น", hint: "ฝา อุปกรณ์" },
+    { value: "แผ่น", hint: "เพลท แผ่นเรียบ" },
+    { value: "ม้วน", hint: "ลวด ตะแกรง" },
+];
+
+function WarehouseMaterialForm({ categories = [], warehouses = [] }) {
+    const { errors } = usePage().props;
+    const { data, setData, post, processing } = useForm({
+        sku: "",
+        title: "",
+        category_id: "",
+        category_name: "",
+        count_unit: "เส้น",
+        domain: "RM",
+        stock: "",
+        warehouse_id: warehouses.length === 1 ? String(warehouses[0].id) : "",
+        weight_per_roll: "",
+    });
+
+    const submit = (e) => {
+        e.preventDefault();
+        post(route("products.store"), {
+            onSuccess: () => toast.success("เพิ่มรายการแล้ว"),
+            onError: () => toast.error("ยังบันทึกไม่ได้ ตรวจช่องที่มีข้อความสีแดง"),
+        });
+    };
+
+    const field = "mt-1 block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-slate-900 dark:text-white";
+
+    return (
+        <>
+            <Head title="เพิ่มรายการ" />
+            <div className="mb-6">
+                <Link
+                    href={route("products.index")}
+                    className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3"
+                >
+                    <IconArrowLeft size={16} />
+                    กลับไปรายการสินค้า
+                </Link>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    เพิ่มรายการเข้าโกดัง
+                </h1>
+                <p className="mt-1 text-sm text-slate-500">
+                    ใส่จำนวนที่มีอยู่ตอนนี้ รายการจะพร้อมตัดบนแท็บเล็ตทันที รหัสสินค้าใช้สแกนได้
+                </p>
+            </div>
+
+            <form onSubmit={submit} className="max-w-2xl space-y-5">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
+                    <div>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">ประเภท</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { value: "RM", label: "RM", hint: "วัตถุดิบ" },
+                                { value: "FG", label: "FG", hint: "สินค้าสำเร็จรูป" },
+                            ].map((item) => (
+                                <button
+                                    key={item.value}
+                                    type="button"
+                                    onClick={() => setData("domain", item.value)}
+                                    className={`rounded-xl border px-3 py-3 text-left ${data.domain === item.value ? "border-primary-500 bg-primary-50 dark:bg-primary-950/40" : "border-slate-200 dark:border-slate-700"}`}
+                                >
+                                    <span className="block text-base font-semibold text-slate-900 dark:text-white">{item.label}</span>
+                                    <span className="block text-xs text-slate-500">{item.hint}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {errors.domain && <span className="text-sm text-danger-500">{errors.domain}</span>}
+                    </div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        ชื่อรายการ
+                        <input
+                            className={field}
+                            value={data.title}
+                            onChange={(e) => setData("title", e.target.value)}
+                            placeholder='เช่น ท่อกลม Ø2" หนา 2.0 มม.'
+                        />
+                        {errors.title && <span className="text-sm text-danger-500">{errors.title}</span>}
+                    </label>
+
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        รหัสสินค้า
+                        <input
+                            className={field}
+                            value={data.sku}
+                            onChange={(e) => setData("sku", e.target.value.trim())}
+                            placeholder="RM-ROUND-2-2.0"
+                        />
+                        {errors.sku && <span className="text-sm text-danger-500">{errors.sku}</span>}
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            หมวด
+                            <select
+                                className={field}
+                                value={data.category_id}
+                                onChange={(e) => setData({ ...data, category_id: e.target.value, category_name: "" })}
+                            >
+                                <option value="">เลือกหมวดที่มีอยู่</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                ))}
+                            </select>
+                        </label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            หรือหมวดใหม่
+                            <input
+                                className={field}
+                                value={data.category_name}
+                                onChange={(e) => setData({ ...data, category_name: e.target.value, category_id: "" })}
+                                placeholder="เช่น เพลทนูน"
+                            />
+                        </label>
+                    </div>
+                    {(errors.category_id || errors.category_name) && (
+                        <span className="text-sm text-danger-500">{errors.category_id || errors.category_name}</span>
+                    )}
+
+                    <div>
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">หน่วยนับ</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {COUNT_UNITS.map((unit) => (
+                                <button
+                                    key={unit.value}
+                                    type="button"
+                                    onClick={() => setData("count_unit", unit.value)}
+                                    className={`rounded-xl border px-3 py-3 text-left ${
+                                        data.count_unit === unit.value
+                                            ? "border-primary-500 bg-primary-50 dark:bg-primary-950/40"
+                                            : "border-slate-200 dark:border-slate-700"
+                                    }`}
+                                >
+                                    <span className="block text-base font-semibold text-slate-900 dark:text-white">{unit.value}</span>
+                                    <span className="block text-xs text-slate-500">{unit.hint}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {errors.count_unit && <span className="text-sm text-danger-500">{errors.count_unit}</span>}
+                    </div>
+
+                    {data.count_unit === "ม้วน" && (
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            น้ำหนักต่อม้วน (กก.) ไม่ใส่ก็ได้
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className={field}
+                                value={data.weight_per_roll}
+                                onChange={(e) => setData("weight_per_roll", e.target.value)}
+                                placeholder="เช่น 25"
+                            />
+                            <span className="mt-1 block text-xs text-slate-500">ถ้าใส่ ตอนตัดจะคิดน้ำหนักจากจำนวนม้วน</span>
+                            {errors.weight_per_roll && <span className="text-sm text-danger-500">{errors.weight_per_roll}</span>}
+                        </label>
+                    )}
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        โกดัง
+                        <select
+                            className={field}
+                            value={data.warehouse_id}
+                            onChange={(e) => setData("warehouse_id", e.target.value)}
+                        >
+                            <option value="">เลือกโกดัง</option>
+                            {warehouses.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>
+                            ))}
+                        </select>
+                        {errors.warehouse_id && <span className="text-sm text-danger-500">{errors.warehouse_id}</span>}
+                    </label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        จำนวนที่มีอยู่ตอนนี้
+                        <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className={field}
+                            value={data.stock}
+                            onChange={(e) => setData("stock", e.target.value)}
+                            placeholder="0"
+                        />
+                        <span className="mt-1 block text-xs text-slate-500">มากกว่า 0 จะขึ้นในรายการตัดของโกดังนี้ทันที</span>
+                        {errors.stock && <span className="text-sm text-danger-500">{errors.stock}</span>}
+                    </label>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                    <Link
+                        href={route("products.index")}
+                        className="px-6 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-medium"
+                    >
+                        ยกเลิก
+                    </Link>
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium disabled:opacity-50"
+                    >
+                        <IconDeviceFloppy size={18} />
+                        {processing ? "กำลังบันทึก..." : "บันทึกรายการ"}
+                    </button>
+                </div>
+            </form>
+        </>
+    );
+}
+
+export default function Create(props) {
+    const isWarehouseMode = Boolean(usePage().props.isWarehouseMode);
+    if (isWarehouseMode) {
+        return <WarehouseMaterialForm categories={props.categories} warehouses={props.warehouses || []} />;
+    }
+
+    return <RetailCreate {...props} />;
 }
 
 Create.layout = (page) => <DashboardLayout children={page} />;

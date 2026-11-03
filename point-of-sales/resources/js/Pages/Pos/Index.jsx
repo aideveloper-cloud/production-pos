@@ -27,12 +27,15 @@ export default function PosIndex({
     isAdmin = false,
     presetsKg = KG_PRESETS,
     operatorName: initialOperatorName = "",
+    posDomain = "RM",
 }) {
     const { t } = useTranslation();
+    const domainParam = String(posDomain).toLowerCase();
+    const modeStorageKey = `wms-pos-mode-${domainParam}`;
     const flash = usePage().props.flash;
     const [mode, setMode] = useState(() => {
         try {
-            return localStorage.getItem("wms-pos-mode") === "receive" ? "receive" : "cut";
+            return localStorage.getItem(modeStorageKey) === "receive" ? "receive" : "cut";
         } catch {
             return "cut";
         }
@@ -61,22 +64,25 @@ export default function PosIndex({
 
     const filteredUnits = useMemo(() => {
         const q = filter.trim().toLowerCase();
-        if (!q) return units;
-        return units.filter(
-            (u) =>
+        return units.filter((u) => {
+            if (u.domain && u.domain !== posDomain) return false;
+            if (!q) return true;
+            return (
                 u.unit_code?.toLowerCase().includes(q) ||
                 u.sku?.toLowerCase().includes(q) ||
                 u.product_title?.toLowerCase().includes(q)
-        );
-    }, [units, filter]);
+            );
+        });
+    }, [units, filter, posDomain]);
 
     const filteredProducts = useMemo(() => {
         const q = filter.trim().toLowerCase();
-        if (!q) return products;
-        return products.filter(
-            (p) => p.sku?.toLowerCase().includes(q) || p.title?.toLowerCase().includes(q)
-        );
-    }, [products, filter]);
+        return products.filter((p) => {
+            if (p.domain && p.domain !== posDomain) return false;
+            if (!q) return true;
+            return p.sku?.toLowerCase().includes(q) || p.title?.toLowerCase().includes(q);
+        });
+    }, [products, filter, posDomain]);
 
     const cutForm = useForm({
         physical_unit_id: null,
@@ -106,14 +112,14 @@ export default function PosIndex({
         setAmount("");
         setFilter("");
         try {
-            localStorage.setItem("wms-pos-mode", next);
+            localStorage.setItem(modeStorageKey, next);
         } catch {
             /* ignore */
         }
     }
 
     function switchWarehouse(id) {
-        router.get(route("pos.index"), { warehouse_id: id }, { preserveState: false });
+        router.get(route("pos.show", { domain: domainParam }), { warehouse_id: id }, { preserveState: false });
     }
 
     function openCut(unit) {
@@ -202,7 +208,7 @@ export default function PosIndex({
                 const csrf =
                     document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ||
                     "";
-                const res = await fetch(route("pos.lookup"), {
+                const res = await fetch(route("pos.lookup", { domain: domainParam }), {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -240,7 +246,7 @@ export default function PosIndex({
         },
         // openCut/openReceive are stable enough for POS session
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [units, products, mode, currentWarehouseId, scanBusy, operatorName, t]
+        [units, products, mode, currentWarehouseId, scanBusy, operatorName, domainParam, t]
     );
 
     useBarcodeScanner(
@@ -271,7 +277,7 @@ export default function PosIndex({
                 qty: amount,
                 operator_name: name,
             });
-            cutForm.post(route("pos.cut"), {
+            cutForm.post(route("pos.cut", { domain: domainParam }), {
                 preserveScroll: true,
                 onSuccess: () => closeOverlay(),
             });
@@ -283,7 +289,7 @@ export default function PosIndex({
             qty: amount,
             operator_name: name,
         });
-        receiveForm.post(route("pos.receive"), {
+        receiveForm.post(route("pos.receive", { domain: domainParam }), {
             preserveScroll: true,
             onSuccess: () => closeOverlay(),
         });
@@ -295,15 +301,16 @@ export default function PosIndex({
         Number(amount) > 0 &&
         operatorName.trim().length >= 2 &&
         (mode === "cut" ? !!selectedUnit : !!selectedProduct);
+    const leavingLabel = posDomain === "FG"
+        ? t("warehouse.floor.issue", { defaultValue: "จ่ายออก" })
+        : t("warehouse.floor.cut");
     const error =
         mode === "cut"
-            ? cutForm.errors.qty ||
-              cutForm.errors.physical_unit_id ||
-              cutForm.errors.operator_name
-            : receiveForm.errors.qty || receiveForm.errors.operator_name;
+            ? Object.values(cutForm.errors).find(Boolean)
+            : Object.values(receiveForm.errors).find(Boolean);
 
     return (
-        <WarehousePosLayout warehouseName={currentWarehouse?.name} showLock>
+        <WarehousePosLayout warehouseName={currentWarehouse?.name} showLock domain={posDomain}>
             <Head title={t("warehouse.pos.brand")} />
 
             <div className="flex h-full flex-col">
@@ -317,7 +324,7 @@ export default function PosIndex({
                             }`}
                         >
                             <IconMinus size={16} />
-                            {t("warehouse.floor.cut")}
+                            {leavingLabel}
                         </button>
                         <button
                             type="button"
@@ -416,11 +423,14 @@ export default function PosIndex({
                             <li key={unit.id}>
                                 <button
                                     type="button"
+                                    data-unit-code={unit.unit_code}
                                     onClick={() => openCut(unit)}
                                     className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-slate-50"
                                 >
                                     <div className="min-w-0">
-                                        <p className="truncate text-lg font-semibold">{unit.unit_code}</p>
+                                        <p className="truncate text-lg font-semibold">
+                                            {unit.unit_code}
+                                        </p>
                                         <p className="truncate text-sm text-slate-500">
                                             {unit.sku} — {unit.product_title}
                                         </p>
@@ -440,16 +450,34 @@ export default function PosIndex({
                             </li>
                         ))}
 
+                    {mode === "receive" && filteredProducts.length === 0 && (
+                        <li className="px-4 py-16 text-center text-slate-400">
+                            {filter.trim()
+                                ? t("warehouse.pos.noProductMatch", {
+                                      defaultValue: "ไม่พบสินค้าที่ค้นหา",
+                                  })
+                                : posDomain === "FG"
+                                  ? t("warehouse.pos.emptyProductsFg", {
+                                        defaultValue: "ยังไม่มีสินค้าสำเร็จรูป (FG) ให้รับเข้า — เพิ่มสินค้าประเภท FG ในหน้าสินค้าก่อน",
+                                    })
+                                  : t("warehouse.pos.emptyProductsRm", {
+                                        defaultValue: "ยังไม่มีวัตถุดิบ (RM) ให้รับเข้า — เพิ่มสินค้าประเภท RM ในหน้าสินค้าก่อน",
+                                    })}
+                        </li>
+                    )}
                     {mode === "receive" &&
                         filteredProducts.map((p) => (
                             <li key={p.id}>
                                 <button
                                     type="button"
+                                    data-sku={p.sku}
                                     onClick={() => openReceive(p)}
                                     className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left active:bg-slate-50"
                                 >
                                     <div className="min-w-0">
-                                        <p className="truncate text-lg font-semibold">{p.sku}</p>
+                                        <p className="truncate text-lg font-semibold">
+                                            {p.sku}
+                                        </p>
                                         <p className="truncate text-sm text-slate-500">{p.title}</p>
                                     </div>
                                     <p className="text-xs font-medium text-slate-400">{p.base_uom}</p>
@@ -465,7 +493,7 @@ export default function PosIndex({
                         <div className="mb-3 flex items-start justify-between gap-3">
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                                    {mode === "cut" ? t("warehouse.floor.cut") : t("warehouse.floor.receive")}
+                                    {mode === "cut" ? leavingLabel : t("warehouse.floor.receive")}
                                 </p>
                                 <p className="text-lg font-bold">
                                     {mode === "cut"
@@ -540,7 +568,9 @@ export default function PosIndex({
                             }`}
                         >
                             {mode === "cut"
-                                ? t("warehouse.floor.confirmCut")
+                                ? (posDomain === "FG"
+                                    ? t("warehouse.floor.confirmIssue", { defaultValue: "ยืนยันจ่ายออก" })
+                                    : t("warehouse.floor.confirmCut"))
                                 : t("warehouse.floor.confirmReceive")}
                         </button>
                     </div>

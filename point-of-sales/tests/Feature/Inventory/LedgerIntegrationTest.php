@@ -254,6 +254,8 @@ class LedgerIntegrationTest extends TestCase
             'sell_price' => 0,
             'stock' => 12,
             'warehouse_id' => $this->phranon->id,
+            'domain' => 'RM',
+            'count_unit' => 'ม้วน',
         ])->assertRedirect(route('products.index'));
 
         $product = Product::query()->where('sku', 'RM-NEW-1')->sole();

@@ -9,6 +9,7 @@ export default function UnitLabelPrintModal({
     title = "พิมพ์ป้ายหน่วย",
 }) {
     const [size, setSize] = useState("70x50");
+    const [symbol, setSymbol] = useState("qr");
     const [copies, setCopies] = useState(1);
     const [showWeight, setShowWeight] = useState(true);
     const [showWarehouse, setShowWarehouse] = useState(true);
@@ -37,6 +38,7 @@ export default function UnitLabelPrintModal({
                         align-items: center; justify-content: center;
                         page-break-inside: avoid; background: white;
                     }
+                    .unit-qr { image-rendering: pixelated; }
                 </style>
             </head>
             <body>
@@ -94,6 +96,18 @@ export default function UnitLabelPrintModal({
                         </select>
                     </label>
                     <label className="flex items-center gap-2">
+                        รูปแบบ
+                        <select
+                            value={symbol}
+                            onChange={(e) => setSymbol(e.target.value)}
+                            className="rounded-lg border-slate-200 text-sm"
+                        >
+                            <option value="qr">QR</option>
+                            <option value="barcode">บาร์โค้ด</option>
+                            <option value="both">QR + บาร์โค้ด</option>
+                        </select>
+                    </label>
+                    <label className="flex items-center gap-2">
                         จำนวนชุด
                         <input
                             type="number"
@@ -132,11 +146,9 @@ export default function UnitLabelPrintModal({
                 <div className="max-h-[60vh] overflow-auto bg-slate-50 p-4">
                     <div ref={printRef}>
                         <UnitLabelGrid
-                            units={units.map((u) => ({
-                                ...u,
-                                // for print window regeneration
-                            }))}
+                            units={units}
                             size={size}
+                            symbol={symbol}
                             copies={copies}
                             showWeight={showWeight}
                             showWarehouse={showWarehouse}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { DomainBadge } from "@/Components/Dashboard/DomainFilter";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import Button from "@/Components/Dashboard/Button";
@@ -235,7 +236,7 @@ export default function Create({ suppliers, goodsReceivings, products }) {
                                         className="flex w-full items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-left text-sm transition hover:border-primary-200 hover:bg-primary-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-primary-700 dark:hover:bg-primary-950/20"
                                     >
                                         <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-200">{product.title}</p>
+                                            <p className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200"><DomainBadge domain={product.domain} />{product.title}</p>
                                             <p className="text-xs text-slate-500">{product.sku || "-"} &bull; Stok: {product.stock}</p>
                                         </div>
                                         <span className="text-xs text-slate-500">{formatCurrency(product.buy_price)}</span>

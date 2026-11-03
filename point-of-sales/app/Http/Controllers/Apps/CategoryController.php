@@ -19,9 +19,17 @@ class CategoryController extends Controller
     public function index()
     {
         // get categories
-        $categories = Category::when(request()->search, function ($categories) {
-            $categories = $categories->where('name', 'like', '%'.request()->search.'%');
-        })->latest()->paginate($this->perPage())->withQueryString();
+        $categories = Category::query()
+            ->when(request()->search, function ($categories) {
+                $categories->where('name', 'like', '%'.request()->search.'%');
+            })
+            ->when(
+                config('warehouse.is_warehouse'),
+                fn ($categories) => $categories->withCount('products')->orderBy('name'),
+                fn ($categories) => $categories->latest()
+            )
+            ->paginate($this->perPage())
+            ->withQueryString();
 
         // return inertia
         return Inertia::render('Dashboard/Categories/Index', [
@@ -46,6 +54,22 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
+        if (config('warehouse.is_warehouse')) {
+            $request->validate([
+                'name' => 'required|string|max:100',
+            ], [
+                'name.required' => 'ใส่ชื่อหมวด',
+            ]);
+
+            Category::create([
+                'image' => 'rm.png',
+                'name' => trim((string) $request->name),
+                'description' => trim((string) $request->name),
+            ]);
+
+            return to_route('categories.index');
+        }
+
         /**
          * validate
          */
@@ -91,6 +115,20 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
+        if (config('warehouse.is_warehouse') && ! $request->hasFile('image')) {
+            $request->validate([
+                'name' => 'required|string|max:100',
+            ], [
+                'name.required' => 'ใส่ชื่อหมวด',
+            ]);
+
+            $category->update([
+                'name' => trim((string) $request->name),
+            ]);
+
+            return to_route('categories.index');
+        }
+
         /**
          * validate
          */

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Apps;
 
+use App\Enums\StockCalcStrategy;
 use App\Enums\StockLedgerMovement;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\PhysicalUnit;
 use App\Models\Product;
 use App\Models\ProductWarehouse;
 use App\Models\Unit;
@@ -32,7 +34,7 @@ class ProductController extends Controller
      * Opening stock is posted like any other movement (tracked products get an OPENING unit),
      * so the ledger and the cached balances start out equal.
      */
-    private function postOpeningStock(Product $product, int $warehouseId, int $qty, ?int $userId): void
+    private function postOpeningStock(Product $product, int $warehouseId, int $qty, ?int $userId, string $note = 'Stok awal saat produk dibuat'): ?PhysicalUnit
     {
         if ($qty <= 0) {
             ProductWarehouse::firstOrCreate(
@@ -40,15 +42,15 @@ class ProductController extends Controller
                 ['stock' => 0]
             );
 
-            return;
+            return null;
         }
 
-        $this->postingService->receive(
+        return $this->postingService->receive(
             $product,
             $warehouseId,
             (float) $qty,
             StockLedgerMovement::Receive,
-            new PostingContext('product_create', $product->id, 'Stok awal saat produk dibuat', $userId),
+            new PostingContext('product_create', $product->id, $note, $userId),
             null,
             'OPENING',
         );
@@ -61,13 +63,15 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $request->validate(['domain' => 'nullable|in:RM,FG']);
         $products = Product::when($request->search, function ($products, $search) {
             $products = $products->where(function ($q) use ($search) {
                 $q->where('title', 'like', '%'.$search.'%')
                     ->orWhere('sku', 'like', '%'.$search.'%')
                     ->orWhere('barcode', 'like', '%'.$search.'%');
             });
-        })->with(['category', 'warehouses:id,code,name'])
+        })->when($request->domain, fn ($query, $domain) => $query->where('domain', $domain))
+            ->with(['category', 'warehouses:id,code,name'])
             ->latest()
             ->paginate($this->perPage())
             ->withQueryString();
@@ -87,6 +91,7 @@ class ProductController extends Controller
         return Inertia::render('Dashboard/Products/Index', [
             'products' => $products,
             'warehouses' => $warehouses,
+            'domain' => $request->input('domain', ''),
         ]);
     }
 
@@ -110,6 +115,9 @@ class ProductController extends Controller
             'categories' => $categories,
             'products' => $products,
             'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
+            'warehouses' => config('warehouse.is_warehouse')
+                ? $this->outletAccessService->warehousesFor(request()->user())->values()
+                : [],
         ]);
     }
 
@@ -120,10 +128,16 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        if (config('warehouse.is_warehouse')) {
+            return $this->storeWarehouseMaterial($request);
+        }
+
         /**
          * validate
          */
         $request->validate([
+            'domain' => 'sometimes|required|in:RM,FG',
+            'base_uom' => 'nullable|in:PCS,KG,M,ROLL,BOX,SET',
             'image' => 'required|image|mimes:jpeg,jpg,png,webp|max:2048',
             'barcode' => 'required|unique:products,barcode',
             'sku' => 'required|unique:products,sku',
@@ -153,6 +167,8 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
+            'domain' => $request->input('domain', 'FG'),
+            'base_uom' => $request->input('base_uom') ?: ($request->input('domain', 'FG') === 'FG' ? 'PCS' : 'KG'),
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             // Non-composite opening stock is posted below, which also sets this counter.
@@ -215,7 +231,7 @@ class ProductController extends Controller
             ->get(['id', 'title', 'sell_price', 'is_composite']);
 
         return Inertia::render('Dashboard/Products/Edit', [
-            'product' => $product->load('components', 'units'),
+            'product' => $product->load(['components', 'units', 'warehouses:id,code,name']),
             'categories' => $categories,
             'products' => $products,
             'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
@@ -230,12 +246,17 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        if (config('warehouse.is_warehouse')) {
+            return $this->updateWarehouseMaterial($request, $product);
+        }
+
         $before = $this->productAuditPayload($product);
 
         /**
          * validate
          */
         $request->validate([
+            'domain' => 'sometimes|required|in:RM,FG',
             'barcode' => 'required|unique:products,barcode,'.$product->id,
             'sku' => 'required|unique:products,sku,'.$product->id,
             'title' => 'required',
@@ -277,6 +298,7 @@ class ProductController extends Controller
                 'title' => $request->title,
                 'description' => $request->description,
                 'category_id' => $request->category_id,
+                'domain' => $request->input('domain', $product->domain),
                 'buy_price' => $request->buy_price,
                 'sell_price' => $request->sell_price,
                 'min_stock' => $request->min_stock ?? 0,
@@ -304,6 +326,7 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
+            'domain' => $request->input('domain', $product->domain),
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'min_stock' => $request->min_stock ?? 0,
@@ -353,6 +376,185 @@ class ProductController extends Controller
 
         // redirect
         return back();
+    }
+
+    /**
+     * Same fields as the warehouse create form. Stock stays on the ledger; this only renames the item.
+     */
+    private function updateWarehouseMaterial(Request $request, Product $product)
+    {
+        $request->validate([
+            'sku' => 'required|string|max:100|unique:products,sku,'.$product->id,
+            'title' => 'required|string|max:255',
+            'category_id' => 'required_without:category_name|nullable|exists:categories,id',
+            'category_name' => 'required_without:category_id|nullable|string|max:100',
+            'count_unit' => 'required|in:เส้น,ชิ้น,แผ่น,ม้วน',
+            'domain' => 'required|in:RM,FG',
+            'weight_per_roll' => 'nullable|numeric|min:0',
+        ], [
+            'sku.required' => 'ใส่รหัสสินค้า',
+            'sku.unique' => 'รหัสนี้มีอยู่แล้ว',
+            'title.required' => 'ใส่ชื่อรายการ',
+            'category_id.required_without' => 'เลือกหมวด หรือพิมพ์ชื่อหมวดใหม่',
+            'category_name.required_without' => 'เลือกหมวด หรือพิมพ์ชื่อหมวดใหม่',
+            'count_unit.required' => 'เลือกหน่วยนับ',
+        ]);
+
+        $before = $this->productAuditPayload($product);
+        $oldSku = $product->sku;
+        $categoryName = trim((string) $request->input('category_name', ''));
+        $category = $categoryName !== ''
+            ? Category::query()->firstOrCreate(
+                ['name' => $categoryName],
+                ['image' => 'rm.png', 'description' => 'Raw materials']
+            )
+            : Category::query()->findOrFail($request->category_id);
+
+        $uom = $this->countUnit($request->count_unit);
+        $weight = $request->filled('weight_per_roll') ? (float) $request->weight_per_roll : null;
+        $sku = trim((string) $request->sku);
+
+        if ($sku !== $oldSku && PhysicalUnit::query()->where('unit_code', $sku)->exists()) {
+            return back()->withErrors(['sku' => 'รหัสนี้ใช้กับหน่วยสแกนของรายการอื่นอยู่แล้ว']);
+        }
+
+        $recode = $product->barcode === $oldSku || $product->barcode === null || $product->barcode === '';
+        if ($recode && Product::query()->where('barcode', $sku)->whereKeyNot($product->id)->exists()) {
+            return back()->withErrors(['sku' => 'รหัสนี้มีอยู่แล้ว']);
+        }
+
+        $product->update([
+            'barcode' => ($product->barcode === $oldSku || $product->barcode === null || $product->barcode === '') ? $sku : $product->barcode,
+            'sku' => $sku,
+            'title' => $request->title,
+            'description' => $request->title,
+            'category_id' => $category->id,
+            'domain' => $request->input('domain'),
+            'base_uom' => $uom['base'],
+            'stock_calc_strategy' => $uom['strategy'],
+            'tracks_physical_units' => true,
+            'spoolman_enabled' => $uom['base'] === 'ROLL' && $weight !== null && $weight > 0,
+            'standard_weight_kg' => $uom['base'] === 'ROLL' ? $weight : null,
+        ]);
+
+        PhysicalUnit::query()
+            ->where('product_id', $product->id)
+            ->where('unit_code', $oldSku)
+            ->update([
+                'unit_code' => $sku,
+                'unit_type' => $uom['unit_type'],
+                'weight_uom' => $uom['base'],
+            ]);
+
+        $this->logProductUpdate($product, $before);
+
+        return to_route('products.index');
+    }
+
+    /**
+     * Warehouse materials: name, SKU, category, count unit, warehouse and opening qty.
+     * The opening qty lands on an ACTIVE unit coded as the SKU, so the floor can cut it immediately.
+     */
+    private function storeWarehouseMaterial(Request $request)
+    {
+        $request->validate([
+            'sku' => 'required|string|max:100|unique:products,sku',
+            'title' => 'required|string|max:255',
+            'category_id' => 'required_without:category_name|nullable|exists:categories,id',
+            'category_name' => 'required_without:category_id|nullable|string|max:100',
+            'count_unit' => 'required|in:เส้น,ชิ้น,แผ่น,ม้วน',
+            'domain' => 'required|in:RM,FG',
+            'stock' => 'required|integer|min:0',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'weight_per_roll' => 'nullable|numeric|min:0',
+        ], [
+            'sku.required' => 'ใส่รหัสสินค้า',
+            'sku.unique' => 'รหัสนี้มีอยู่แล้ว',
+            'title.required' => 'ใส่ชื่อรายการ',
+            'category_id.required_without' => 'เลือกหมวด หรือพิมพ์ชื่อหมวดใหม่',
+            'category_name.required_without' => 'เลือกหมวด หรือพิมพ์ชื่อหมวดใหม่',
+            'count_unit.required' => 'เลือกหน่วยนับ',
+            'domain.required' => 'เลือก RM หรือ FG',
+            'stock.required' => 'ใส่จำนวน',
+            'warehouse_id.required' => 'เลือกโกดัง',
+        ]);
+
+        $warehouse = Warehouse::query()->findOrFail($request->warehouse_id);
+        abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 403);
+
+        $categoryName = trim((string) $request->input('category_name', ''));
+        $category = $categoryName !== ''
+            ? Category::query()->firstOrCreate(
+                ['name' => $categoryName],
+                ['image' => 'rm.png', 'description' => 'Raw materials']
+            )
+            : Category::query()->findOrFail($request->category_id);
+
+        $uom = $this->countUnit($request->count_unit);
+        $weight = $request->filled('weight_per_roll') ? (float) $request->weight_per_roll : null;
+        $sku = trim((string) $request->sku);
+
+        $product = Product::query()->create([
+            'image' => 'product.png',
+            'barcode' => $sku,
+            'sku' => $sku,
+            'title' => $request->title,
+            'description' => $request->title,
+            'category_id' => $category->id,
+            'domain' => $request->input('domain'),
+            'base_uom' => $uom['base'],
+            'stock_calc_strategy' => $uom['strategy'],
+            'tracks_physical_units' => true,
+            'spoolman_enabled' => $uom['base'] === 'ROLL' && $weight !== null && $weight > 0,
+            'standard_weight_kg' => $uom['base'] === 'ROLL' ? $weight : null,
+            'buy_price' => 0,
+            'sell_price' => 0,
+            'stock' => 0,
+            'min_stock' => 0,
+            'max_stock' => 0,
+            'tax_type' => 'exclusive',
+            'tax_rate' => 0,
+            'is_composite' => false,
+        ]);
+
+        $unit = $this->postOpeningStock(
+            $product,
+            $warehouse->id,
+            (int) $request->stock,
+            $request->user()?->id,
+            'เพิ่มรายการเข้าโกดัง',
+        );
+
+        if ($unit && ! PhysicalUnit::query()->where('unit_code', $sku)->whereKeyNot($unit->id)->exists()) {
+            $unit->unit_code = $sku;
+            $unit->lot_code = 'OPENING';
+            $unit->unit_type = $uom['unit_type'];
+            $unit->save();
+        }
+
+        $product->refresh();
+        $this->stockMutationService->recordInitialStock($product, $request->user()?->id, $warehouse->id);
+        $this->auditLogService->log(
+            event: 'product.created',
+            module: 'products',
+            auditable: $product,
+            description: $request->input('domain') === 'FG' ? 'เพิ่มสินค้าสำเร็จรูป' : 'เพิ่มวัตถุดิบ',
+            after: $this->productAuditPayload($product->fresh())
+        );
+
+        return to_route('products.index');
+    }
+
+    /**
+     * @return array{base:string, strategy:StockCalcStrategy, unit_type:string}
+     */
+    private function countUnit(string $thai): array
+    {
+        return match ($thai) {
+            'ม้วน' => ['base' => 'ROLL', 'strategy' => StockCalcStrategy::QtyBased, 'unit_type' => 'ROLL'],
+            'แผ่น' => ['base' => 'SHEET', 'strategy' => StockCalcStrategy::SheetBased, 'unit_type' => 'SHEET_PACK'],
+            default => ['base' => 'PCS', 'strategy' => StockCalcStrategy::PieceBased, 'unit_type' => 'OTHER'],
+        };
     }
 
     private function compositeRules(): array
@@ -488,6 +690,8 @@ class ProductController extends Controller
             'sell_price',
             'stock',
             'category_id',
+            'domain',
+            'base_uom',
         ]);
     }
 }

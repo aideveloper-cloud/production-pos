@@ -11,7 +11,7 @@ import {
     IconPhoto,
 } from "@tabler/icons-react";
 
-export default function Edit({ category }) {
+function RetailEdit({ category }) {
     const { errors } = usePage().props;
 
     const { data, setData, post, processing } = useForm({
@@ -137,6 +137,62 @@ export default function Edit({ category }) {
             </form>
         </>
     );
+}
+
+function WarehouseEdit({ category }) {
+    const { errors } = usePage().props;
+    const { data, setData, post, processing } = useForm({
+        name: category.name,
+        _method: "PUT",
+    });
+
+    const submit = (e) => {
+        e.preventDefault();
+        post(route("categories.update", category.id), {
+            onSuccess: () => toast.success("บันทึกชื่อหมวดแล้ว"),
+            onError: () => toast.error("ยังบันทึกไม่ได้"),
+        });
+    };
+
+    return (
+        <>
+            <Head title="แก้ชื่อหมวด" />
+            <div className="mb-6">
+                <Link href={route("categories.index")} className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3">
+                    <IconArrowLeft size={16} />
+                    กลับไปหมวดวัตถุดิบ
+                </Link>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">แก้ชื่อหมวด</h1>
+            </div>
+            <form onSubmit={submit} className="max-w-lg">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        ชื่อหมวด
+                        <input
+                            className="mt-1 block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5"
+                            value={data.name}
+                            onChange={(e) => setData("name", e.target.value)}
+                        />
+                        {errors.name && <span className="text-sm text-danger-500">{errors.name}</span>}
+                    </label>
+                    <div className="flex justify-end gap-3 mt-6">
+                        <Link href={route("categories.index")} className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600">
+                            ยกเลิก
+                        </Link>
+                        <button type="submit" disabled={processing} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-500 text-white disabled:opacity-50">
+                            <IconDeviceFloppy size={18} />
+                            {processing ? "กำลังบันทึก..." : "บันทึก"}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </>
+    );
+}
+
+export default function Edit(props) {
+    const isWarehouseMode = Boolean(usePage().props.isWarehouseMode);
+    return isWarehouseMode ? <WarehouseEdit category={props.category} /> : <RetailEdit {...props} />;
 }
 
 Edit.layout = (page) => <DashboardLayout children={page} />;

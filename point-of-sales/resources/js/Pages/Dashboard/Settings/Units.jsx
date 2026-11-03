@@ -12,7 +12,8 @@ import { useAuthorization } from "@/Utils/authorization";
 import Input from "@/Components/Dashboard/Input";
 
 export default function Units({ units = [] }) {
-    const { flash } = usePage().props;
+    const { flash, isWarehouseMode } = usePage().props;
+    const warehouse = Boolean(isWarehouseMode);
     const { can } = useAuthorization();
     const canCreate = can("units-create");
     const canUpdate = can("units-update");
@@ -60,21 +61,21 @@ export default function Units({ units = [] }) {
     };
 
     const handleDelete = (u) => {
-        if (!confirm(`Hapus satuan ${u.name}?`)) return;
+        if (!confirm(warehouse ? `ลบหน่วย ${u.name}?` : `Hapus satuan ${u.name}?`)) return;
         router.delete(route("settings.units.destroy", u.id));
     };
 
     return (
         <>
-            <Head title="Pengaturan Satuan" />
+            <Head title={warehouse ? "หน่วยนับ" : "Pengaturan Satuan"} />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconRulerMeasure size={28} className="text-primary-500" />
-                    Satuan
+                    {warehouse ? "หน่วยนับ" : "Satuan"}
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Master satuan produk (pcs, box, karton, dll) untuk penjualan multi-satuan
+                    {warehouse ? "หน่วยที่ใช้นับสต็อก เช่น เส้น ชิ้น แผ่น ม้วน" : "Master satuan produk (pcs, box, karton, dll) untuk penjualan multi-satuan"}
                 </p>
             </div>
 
@@ -82,7 +83,7 @@ export default function Units({ units = [] }) {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <h3 className="font-semibold text-slate-800 dark:text-white">
-                            Daftar Satuan ({units.length})
+                            {warehouse ? `รายการหน่วย (${units.length})` : `Daftar Satuan (${units.length})`}
                         </h3>
                         {canCreate && (
                             <button
@@ -90,7 +91,7 @@ export default function Units({ units = [] }) {
                                 className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
                             >
                                 <IconPlus size={18} />
-                                Tambah Satuan
+                                {warehouse ? "เพิ่มหน่วย" : "Tambah Satuan"}
                             </button>
                         )}
                     </div>

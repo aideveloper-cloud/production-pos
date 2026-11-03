@@ -20,6 +20,7 @@ import {
 
 // Role Card Component
 function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
+    const warehouse = Boolean(usePage().props.isWarehouseMode);
     return (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-lg transition-all">
             {/* Header */}
@@ -33,7 +34,7 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
                             {role.name}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {role.permissions.length} hak akses
+                            {role.permissions.length} {warehouse ? "สิทธิ์" : "hak akses"}
                         </p>
                     </div>
                 </div>
@@ -68,7 +69,7 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
                             className="flex-1 flex items-center justify-center gap-1.5 py-3 text-warning-600 hover:bg-warning-50 dark:hover:bg-warning-950/50 text-sm font-medium transition-colors"
                         >
                             <IconPencilCog size={16} />
-                            <span>Edit</span>
+                            <span>{warehouse ? "แก้ไข" : "Edit"}</span>
                         </button>
                     )}
                     {canUpdate && canDelete && (
@@ -80,7 +81,7 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
                             className="flex-1 flex items-center justify-center gap-1.5 py-3 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/50 text-sm font-medium transition-colors"
                         >
                             <IconTrash size={16} />
-                            <span>Hapus</span>
+                            <span>{warehouse ? "ลบ" : "Hapus"}</span>
                         </button>
                     )}
                 </div>
@@ -90,7 +91,8 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
 }
 
 export default function Index() {
-    const { roles, permissions, errors } = usePage().props;
+    const { roles, permissions, errors, isWarehouseMode } = usePage().props;
+    const warehouse = Boolean(isWarehouseMode);
     const { can } = useAuthorization();
     const canCreateRoles = can("roles-create");
     const canUpdateRoles = can("roles-update");
@@ -154,14 +156,14 @@ export default function Index() {
     };
 
     const handleDelete = (roleId) => {
-        if (confirm("Hapus role ini?")) {
+        if (confirm(warehouse ? "ลบกลุ่มสิทธิ์นี้?" : "Hapus role ini?")) {
             destroy(route("roles.destroy", roleId));
         }
     };
 
     return (
         <>
-            <Head title="Akses Group" />
+            <Head title={warehouse ? "กลุ่มสิทธิ์" : "Akses Group"} />
 
             {/* Header */}
             <div className="mb-6">
@@ -172,11 +174,10 @@ export default function Index() {
                                 size={28}
                                 className="text-primary-500"
                             />
-                            Akses Group
+                            {warehouse ? "กลุ่มสิทธิ์" : "Akses Group"}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {roles.total || roles.data?.length || 0} group
-                            terdaftar
+                            {roles.total || roles.data?.length || 0} {warehouse ? "กลุ่ม" : "group terdaftar"}
                         </p>
                     </div>
                     {canCreateRoles && (
@@ -191,7 +192,7 @@ export default function Index() {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
                             }
-                            label={"Tambah Group"}
+                            label={warehouse ? "เพิ่มกลุ่ม" : "Tambah Group"}
                             onClick={() => setData("isOpen", true)}
                         />
                     )}
@@ -202,7 +203,7 @@ export default function Index() {
             <div className="mb-4 w-full sm:w-80">
                 <Search
                     url={route("roles.index")}
-                    placeholder="Cari akses group..."
+                    placeholder={warehouse ? "ค้นหากลุ่มสิทธิ์" : "Cari akses group..."}
                 />
             </div>
 
@@ -219,14 +220,14 @@ export default function Index() {
                     })
                 }
                 title={
-                    data.isUpdate ? "Ubah Akses Group" : "Tambah Akses Group"
+                    data.isUpdate ? (warehouse ? "แก้กลุ่มสิทธิ์" : "Ubah Akses Group") : (warehouse ? "เพิ่มกลุ่มสิทธิ์" : "Tambah Akses Group")
                 }
                 icon={<IconUserShield size={20} strokeWidth={1.5} />}
             >
                 <form onSubmit={data.isUpdate ? updateRole : saveRole}>
                     <div className="mb-4">
                         <Input
-                            label={"Nama group"}
+                            label={warehouse ? "ชื่อกลุ่ม" : "Nama group"}
                             type={"text"}
                             placeholder={"Masukan nama group"}
                             value={data.name}
@@ -249,7 +250,7 @@ export default function Index() {
                         className={
                             "bg-primary-500 hover:bg-primary-600 text-white w-full justify-center"
                         }
-                        label={"Simpan"}
+                        label={warehouse ? "บันทึก" : "Simpan"}
                     />
                 </form>
             </Modal>
@@ -278,10 +279,10 @@ export default function Index() {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Group
+                        {warehouse ? "ยังไม่มีกลุ่มสิทธิ์" : "Belum Ada Group"}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan group akses pertama.
+                        {warehouse ? "เพิ่มกลุ่มสิทธิ์กลุ่มแรก" : "Tambahkan group akses pertama."}
                     </p>
                     <Button
                         type={"button"}

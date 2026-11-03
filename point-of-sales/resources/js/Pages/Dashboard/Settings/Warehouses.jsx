@@ -13,7 +13,8 @@ import { useAuthorization } from "@/Utils/authorization";
 import Input from "@/Components/Dashboard/Input";
 
 export default function Warehouses({ warehouses = [] }) {
-    const { flash } = usePage().props;
+    const { flash, isWarehouseMode } = usePage().props;
+    const warehouse = Boolean(isWarehouseMode);
     const { can } = useAuthorization();
     const canCreate = can("warehouses-create");
     const canUpdate = can("warehouses-update");
@@ -77,12 +78,14 @@ export default function Warehouses({ warehouses = [] }) {
     };
 
     const handleDelete = (w) => {
-        if (!confirm(`Hapus gudang ${w.name}?`)) return;
+        if (!confirm(warehouse ? `ลบคลัง ${w.name}?` : `Hapus gudang ${w.name}?`)) return;
         router.delete(route("settings.warehouses.destroy", w.id));
     };
 
     const typeLabel = (type) => {
-        const labels = { main: "Utama", branch: "Cabang", warehouse: "Gudang" };
+        const labels = warehouse
+            ? { main: "หลัก", branch: "สาขา", warehouse: "คลัง" }
+            : { main: "Utama", branch: "Cabang", warehouse: "Gudang" };
         return labels[type] || type;
     };
 
@@ -97,15 +100,15 @@ export default function Warehouses({ warehouses = [] }) {
 
     return (
         <>
-            <Head title="Pengaturan Gudang" />
+            <Head title={warehouse ? "คลัง" : "Pengaturan Gudang"} />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconBuildingWarehouse size={28} className="text-primary-500" />
-                    Gudang / Cabang
+                    {warehouse ? "คลัง" : "Gudang / Cabang"}
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Kelola gudang dan cabang untuk pemisahan stok per lokasi
+                    {warehouse ? "จัดการคลังที่แยกสต็อกตามสถานที่" : "Kelola gudang dan cabang untuk pemisahan stok per lokasi"}
                 </p>
             </div>
 
@@ -113,7 +116,7 @@ export default function Warehouses({ warehouses = [] }) {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <h3 className="font-semibold text-slate-800 dark:text-white">
-                            Daftar Gudang ({warehouses.length})
+                            {warehouse ? `รายการคลัง (${warehouses.length})` : `Daftar Gudang (${warehouses.length})`}
                         </h3>
                         {canCreate && (
                             <button
@@ -121,7 +124,7 @@ export default function Warehouses({ warehouses = [] }) {
                                 className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
                             >
                                 <IconPlus size={18} />
-                                Tambah Gudang
+                                {warehouse ? "เพิ่มคลัง" : "Tambah Gudang"}
                             </button>
                         )}
                     </div>

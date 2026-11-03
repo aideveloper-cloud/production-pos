@@ -34,6 +34,9 @@ const formatCurrency = (value = 0) =>
     }).format(value);
 
 // Product Card for Grid View
+const unitLabel = (uom) =>
+    ({ PCS: "ชิ้น", SHEET: "แผ่น", ROLL: "ม้วน", KG: "กก.", M: "เมตร" }[uom] || uom || "");
+
 function ProductCard({
     product,
     index,
@@ -43,6 +46,7 @@ function ProductCard({
     onToggle,
     canUpdate,
     canDelete,
+    warehouseMode = false,
 }) {
     const rowNumber = index + 1 + (currentPage - 1) * perPage;
     const lowStock = product.stock > 0 && product.stock <= 5;
@@ -51,13 +55,41 @@ function ProductCard({
 
     return (
         <div
-            className={`group bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden hover:shadow-lg transition-all duration-200 ${
+            className={`group relative bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden hover:shadow-lg transition-all duration-200 ${
                 isSelected
                     ? "border-primary-500 ring-2 ring-primary-500/20"
                     : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
         >
+            {warehouseMode && (
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => onToggle(product)}
+                        className="w-4 h-4 rounded border-slate-300 text-primary-500"
+                    />
+                    {(canUpdate || canDelete) && (
+                        <div className="flex gap-1">
+                            {canUpdate && (
+                                <Link href={route("products.edit", product.id)} className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <IconPencilCog size={16} />
+                                </Link>
+                            )}
+                            {canDelete && (
+                                <Button
+                                    type={"delete"}
+                                    icon={<IconTrash size={16} />}
+                                    className={"p-1.5 rounded-lg text-danger-600"}
+                                    url={route("products.destroy", product.id)}
+                                />
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
             {/* Product Image */}
+            {!warehouseMode && (
             <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 {/* Checkbox */}
                 <div className="absolute top-2 left-2 z-10">
@@ -131,33 +163,55 @@ function ProductCard({
                     </div>
                 )}
             </div>
+            )}
 
             {/* Product Info */}
             <div className="p-3 sm:p-4">
                 <div className="flex items-start justify-between gap-2 mb-2">
                     <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-400 rounded-md truncate">
-                        {product.category?.name || "Kategori"}
+                        {product.category?.name || (warehouseMode ? "หมวด" : "Kategori")}
                     </span>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 line-clamp-2 mb-1">
+                    {warehouseMode && product.domain && (
+                        <span className="mr-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
+                            {product.domain}
+                        </span>
+                    )}
                     {product.title}
                 </h3>
                 {(product.barcode || product.sku) && (
                     <div className="space-y-0.5 mb-2">
-                        {product.barcode && (
+                        {!warehouseMode && product.barcode && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                                 Barcode: {product.barcode}
                             </p>
                         )}
                         {product.sku && (
                             <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
-                                SKU: {product.sku}
+                                {product.sku}
                             </p>
                         )}
                     </div>
                 )}
 
                 {/* Price Section - Mobile Friendly */}
+                {warehouseMode ? (
+                    <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <p className="text-lg font-bold text-slate-900 dark:text-white">
+                            {product.stock} {unitLabel(product.base_uom)}
+                        </p>
+                        {Array.isArray(product.warehouse_stocks) && product.warehouse_stocks.length > 0 && (
+                            <div className="mt-1 space-y-0.5">
+                                {product.warehouse_stocks.map((wh) => (
+                                    <p key={wh.code} className="text-xs text-slate-500 dark:text-slate-400">
+                                        {wh.name}: {wh.stock}
+                                    </p>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ) : (
                 <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                     {/* Sell Price - Prominent */}
                     <p className="text-base sm:text-lg font-bold text-primary-600 dark:text-primary-400">
@@ -179,15 +233,16 @@ function ProductCard({
                         )}
                     </div>
                 </div>
+                )}
             </div>
         </div>
     );
 }
 
-export default function Index({ products }) {
+export default function Index({ products, domain = "" }) {
     const { can } = useAuthorization();
     const isWarehouseMode = Boolean(usePage().props.isWarehouseMode);
-    const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
+    const [viewMode, setViewMode] = useState(isWarehouseMode ? "list" : "grid");
     const [showBarcodeModal, setShowBarcodeModal] = useState(false);
     const [singleProductBarcode, setSingleProductBarcode] = useState(null);
     const [selectedProducts, setSelectedProducts] = useState([]);
@@ -237,17 +292,19 @@ export default function Index({ products }) {
 
     return (
         <>
-            <Head title="Produk" />
+            <Head title={isWarehouseMode ? "รายการสินค้า" : "Produk"} />
 
             {/* Header */}
             <div data-tour="products-header" className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Produk
+                            {isWarehouseMode ? "รายการสินค้า" : "Produk"}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {products.total} produk terdaftar
+                            {isWarehouseMode
+                                ? `${products.total} รายการ`
+                                : `${products.total} produk terdaftar`}
                         </p>
                     </div>
                     <div
@@ -256,7 +313,7 @@ export default function Index({ products }) {
                     >
                         <button
                             onClick={handlePrintAllBarcodes}
-                            className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
+                            className={`${isWarehouseMode ? "hidden" : "inline-flex"} items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto`}
                         >
                             <IconBarcode size={18} />
                             Cetak All Barcode
@@ -264,7 +321,7 @@ export default function Index({ products }) {
                         {canCreateProducts && (
                             <>
                                 {isWarehouseMode ? (
-                                    <ExportMenu routeName="export.warehouse.materials" />
+                                    <ExportMenu routeName="export.warehouse.materials" params={{ domain }} />
                                 ) : (
                                 <a
                                     href={route("export.products")}
@@ -280,7 +337,7 @@ export default function Index({ products }) {
                                     className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
                                 >
                                     <IconUpload size={18} />
-                                    Import
+                                    {isWarehouseMode ? "นำเข้า" : "Import"}
                                 </button>
                                 <input
                                     id="import-products-input"
@@ -306,7 +363,7 @@ export default function Index({ products }) {
                                 className={
                                     "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30 w-full sm:w-auto justify-center"
                                 }
-                                label={"Tambah Produk"}
+                                label={isWarehouseMode ? "เพิ่มรายการ" : "Tambah Produk"}
                                 href={route("products.create")}
                             />
                         )}
@@ -320,10 +377,18 @@ export default function Index({ products }) {
                 className="mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3"
             >
                 <div className="flex items-center gap-3">
+                    <select aria-label="ประเภทสินค้า" className="rounded-lg dark:bg-slate-800" value={domain} onChange={(e) => {
+                        setSelectedProducts([]);
+                        router.get(route("products.index"), { domain: e.target.value, search: new URLSearchParams(window.location.search).get("search") || "" });
+                    }}>
+                        <option value="">RM / FG ทั้งหมด</option>
+                        <option value="RM">RM — วัตถุดิบ</option>
+                        <option value="FG">FG — สินค้าสำเร็จรูป</option>
+                    </select>
                     <div className="w-full sm:w-80">
-                        <Search
-                            url={route("products.index")}
-                            placeholder="Cari produk..."
+                            <Search
+                            url={route("products.index", { domain })}
+                            placeholder={isWarehouseMode ? "ค้นหาชื่อหรือรหัส" : "Cari produk..."}
                         />
                     </div>
                     {/* Select All Checkbox */}
@@ -339,7 +404,7 @@ export default function Index({ products }) {
                             className="w-4 h-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
                         />
                         <span className="text-sm text-slate-600 dark:text-slate-400 hidden sm:inline">
-                            Pilih Semua
+                            {isWarehouseMode ? "เลือกทั้งหมด" : "Pilih Semua"}
                         </span>
                     </label>
                 </div>
@@ -351,7 +416,7 @@ export default function Index({ products }) {
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
                         >
                             <IconPrinter size={18} />
-                            Cetak Terpilih ({selectedProducts.length})
+                            {isWarehouseMode ? `พิมพ์ที่เลือก (${selectedProducts.length})` : `Cetak Terpilih (${selectedProducts.length})`}
                         </button>
                     )}
                     <button
@@ -396,20 +461,22 @@ export default function Index({ products }) {
                                 onToggle={toggleProductSelection}
                                 canUpdate={canEditProducts}
                                 canDelete={canDeleteProducts}
+                                warehouseMode={isWarehouseMode}
                             />
                         ))}
                     </div>
                 ) : (
                     /* List View */
-                    <Table.Card title={"Data Produk"}>
+                        <Table.Card title={isWarehouseMode ? "รายการสินค้า" : "Data Produk"}>
                         <Table>
                             <Table.Thead>
                                 <tr>
-                                    <Table.Th className="w-10">No</Table.Th>
-                                    <Table.Th>Produk</Table.Th>
-                                    <Table.Th>Kategori</Table.Th>
-                                    <Table.Th>Harga Beli</Table.Th>
-                                    <Table.Th>Harga Jual</Table.Th>
+                                    <Table.Th className="w-10">{isWarehouseMode ? "ลำดับ" : "No"}</Table.Th>
+                                    <Table.Th>{isWarehouseMode ? "รายการ" : "Produk"}</Table.Th>
+                                    <Table.Th>{isWarehouseMode ? "หมวด" : "Kategori"}</Table.Th>
+                                    {!isWarehouseMode && <Table.Th>Harga Beli</Table.Th>}
+                                    {!isWarehouseMode && <Table.Th>Harga Jual</Table.Th>}
+                                    {isWarehouseMode && <Table.Th>หน่วย</Table.Th>}
                                     <Table.Th>สต๊อก / โกดัง</Table.Th>
                                     <Table.Th></Table.Th>
                                 </tr>
@@ -427,6 +494,7 @@ export default function Index({ products }) {
                                         </Table.Td>
                                         <Table.Td>
                                             <div className="flex items-center gap-3">
+                                                {!isWarehouseMode && (
                                                 <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
                                                     {product.image ? (
                                                         <img
@@ -443,17 +511,23 @@ export default function Index({ products }) {
                                                         </div>
                                                     )}
                                                 </div>
+                                                )}
                                                 <div>
-                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                                        {isWarehouseMode && product.domain && (
+                                                            <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
+                                                                {product.domain}
+                                                            </span>
+                                                        )}
                                                         {product.title}
                                                     </p>
                                                     <div className="text-xs text-slate-500 dark:text-slate-400 space-y-0.5">
-                                                        {product.barcode && (
+                                                        {!isWarehouseMode && product.barcode && (
                                                             <p>
                                                                 Barcode: {product.barcode}
                                                             </p>
                                                         )}
-                                                        {product.sku && <p>SKU: {product.sku}</p>}
+                                                        {product.sku && <p>{isWarehouseMode ? product.sku : `SKU: ${product.sku}`}</p>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -463,12 +537,19 @@ export default function Index({ products }) {
                                                 {product.category?.name}
                                             </span>
                                         </Table.Td>
+                                        {!isWarehouseMode && (
                                         <Table.Td>
                                             {formatCurrency(product.buy_price)}
                                         </Table.Td>
+                                        )}
+                                        {!isWarehouseMode && (
                                         <Table.Td className="font-semibold text-primary-600 dark:text-primary-400">
                                             {formatCurrency(product.sell_price)}
                                         </Table.Td>
+                                        )}
+                                        {isWarehouseMode && (
+                                        <Table.Td>{unitLabel(product.base_uom)}</Table.Td>
+                                        )}
                                         <Table.Td>
                                             <span
                                                 className={`px-2 py-0.5 text-xs font-medium rounded ${
@@ -556,10 +637,10 @@ export default function Index({ products }) {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Produk
+                        {isWarehouseMode ? "ยังไม่มีรายการ" : "Belum Ada Produk"}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan produk pertama Anda untuk memulai.
+                        {isWarehouseMode ? "เพิ่มรายการแรกเพื่อเริ่มใช้" : "Tambahkan produk pertama Anda untuk memulai."}
                     </p>
                     {canCreateProducts && (
                         <Button
@@ -568,7 +649,7 @@ export default function Index({ products }) {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white"
                             }
-                            label={"Tambah Produk"}
+                            label={isWarehouseMode ? "เพิ่มรายการ" : "Tambah Produk"}
                             href={route("products.create")}
                         />
                     )}

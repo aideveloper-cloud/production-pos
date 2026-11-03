@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, router } from "@inertiajs/react";
+import { Link, router, usePage } from "@inertiajs/react";
 import {
     IconChevronRight,
     IconChevronLeft,
@@ -12,11 +12,12 @@ import {
  * disabled states, and wraps gracefully on mobile.
  */
 export default function Pagination({ links }) {
-    if (!links || links.length <= 3) return null;
-
+    const warehouse = Boolean(usePage().props.isWarehouseMode);
     const [perPage, setPerPage] = useState(
         () => new URLSearchParams(window.location.search).get("per_page") || "10"
     );
+
+    if (!links || links.length <= 3) return null;
 
     const changePerPage = (value) => {
         setPerPage(value);
@@ -61,23 +62,23 @@ export default function Pagination({ links }) {
         >
             <div className="order-2 sm:order-1 flex items-center gap-3 flex-wrap">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Halaman <span className="font-medium text-slate-700 dark:text-slate-200">{current}</span> dari{" "}
+                    {warehouse ? "หน้า" : "Halaman"} <span className="font-medium text-slate-700 dark:text-slate-200">{current}</span> {warehouse ? "จาก" : "dari"}{" "}
                     <span className="font-medium text-slate-700 dark:text-slate-200">{total}</span>
                 </p>
 
                 <label className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                    <span className="hidden sm:inline">Tampilkan</span>
+                    <span className="hidden sm:inline">{warehouse ? "แสดง" : "Tampilkan"}</span>
                     <select
                         value={perPage}
                         onChange={(e) => changePerPage(e.target.value)}
                         className="py-1 px-2 rounded-lg text-sm border bg-white text-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-800 border-slate-200 focus:outline-none focus:ring-0"
-                        aria-label="Jumlah data per halaman"
+                        aria-label={warehouse ? "จำนวนต่อหน้า" : "Jumlah data per halaman"}
                     >
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                     </select>
-                    <span className="hidden sm:inline">per halaman</span>
+                    <span className="hidden sm:inline">{warehouse ? "รายการต่อหน้า" : "per halaman"}</span>
                 </label>
             </div>
 
@@ -89,7 +90,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 href={item.url}
                                 className={baseBtn}
-                                aria-label="Halaman sebelumnya"
+                                aria-label={warehouse ? "หน้าก่อนหน้า" : "Halaman sebelumnya"}
                             >
                                 <IconChevronLeft size={18} strokeWidth={1.5} />
                             </Link>
@@ -98,7 +99,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 className={`${baseBtn} ${disabledBtn}`}
                                 aria-disabled="true"
-                                aria-label="Halaman sebelumnya"
+                                aria-label={warehouse ? "หน้าก่อนหน้า" : "Halaman sebelumnya"}
                             >
                                 <IconChevronLeft size={18} strokeWidth={1.5} />
                             </span>
@@ -111,7 +112,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 href={item.url}
                                 className={baseBtn}
-                                aria-label="Halaman berikutnya"
+                                aria-label={warehouse ? "หน้าถัดไป" : "Halaman berikutnya"}
                             >
                                 <IconChevronRight size={18} strokeWidth={1.5} />
                             </Link>
@@ -120,7 +121,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 className={`${baseBtn} ${disabledBtn}`}
                                 aria-disabled="true"
-                                aria-label="Halaman berikutnya"
+                                aria-label={warehouse ? "หน้าถัดไป" : "Halaman berikutnya"}
                             >
                                 <IconChevronRight size={18} strokeWidth={1.5} />
                             </span>

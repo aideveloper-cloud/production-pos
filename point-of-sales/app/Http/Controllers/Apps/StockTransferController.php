@@ -43,7 +43,7 @@ class StockTransferController extends Controller
     public function create(): Response
     {
         $warehouses = $this->outletAccessService->warehousesFor(request()->user());
-        $products = Product::orderBy('title')->get(['id', 'title', 'sku', 'stock']);
+        $products = Product::orderBy('title')->get(['id', 'title', 'sku', 'domain', 'stock']);
 
         return Inertia::render('Dashboard/StockTransfers/Create', [
             'warehouses' => $warehouses,

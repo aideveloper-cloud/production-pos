@@ -1,4 +1,4 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import React from "react";
 import { useForm } from "@inertiajs/react";
 import Swal from "sweetalert2";
@@ -15,24 +15,25 @@ export default function Button({
     ...props
 }) {
     const { delete: destroy } = useForm();
+    const warehouse = Boolean(usePage().props.isWarehouseMode);
 
     const deleteData = async (url) => {
         Swal.fire({
-            title: "Hapus Data?",
-            text: "Data yang dihapus tidak dapat dikembalikan!",
+            title: warehouse ? "ลบรายการนี้?" : "Hapus Data?",
+            text: warehouse ? "ลบแล้วกู้คืนไม่ได้" : "Data yang dihapus tidak dapat dikembalikan!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#6366f1",
             cancelButtonColor: "#64748b",
-            confirmButtonText: "Ya, Hapus!",
-            cancelButtonText: "Batal",
+            confirmButtonText: warehouse ? "ลบ" : "Ya, Hapus!",
+            cancelButtonText: warehouse ? "ยกเลิก" : "Batal",
         }).then((result) => {
             if (result.isConfirmed) {
                 destroy(url);
 
                 Swal.fire({
-                    title: "Berhasil!",
-                    text: "Data berhasil dihapus!",
+                    title: warehouse ? "ลบแล้ว" : "Berhasil!",
+                    text: warehouse ? "ลบรายการเรียบร้อย" : "Data berhasil dihapus!",
                     icon: "success",
                     showConfirmButton: false,
                     timer: 1500,

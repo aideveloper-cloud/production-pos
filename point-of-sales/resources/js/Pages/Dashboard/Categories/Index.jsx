@@ -82,25 +82,27 @@ function CategoryCard({ category, canUpdate, canDelete }) {
 
 export default function Index({ categories }) {
     const { can } = useAuthorization();
-    const [viewMode, setViewMode] = useState("grid");
+    const isWarehouseMode = Boolean(usePage().props.isWarehouseMode);
+    const [viewMode, setViewMode] = useState(isWarehouseMode ? "list" : "grid");
     const canCreateCategories = can("categories-create");
     const canEditCategories = can("categories-edit");
     const canDeleteCategories = can("categories-delete");
 
     return (
         <>
-            <Head title="Kategori" />
+            <Head title={isWarehouseMode ? "หมวดสินค้า" : "Kategori"} />
 
             {/* Header */}
             <div className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Kategori
+                            {isWarehouseMode ? "หมวดสินค้า" : "Kategori"}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {categories.total || categories.data?.length || 0}{" "}
-                            kategori terdaftar
+                            {isWarehouseMode
+                                ? `${categories.total || categories.data?.length || 0} หมวด`
+                                : `${categories.total || categories.data?.length || 0} kategori terdaftar`}
                         </p>
                     </div>
                     {canCreateCategories && (
@@ -115,7 +117,7 @@ export default function Index({ categories }) {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
                             }
-                            label={"Tambah Kategori"}
+                            label={isWarehouseMode ? "เพิ่มหมวด" : "Tambah Kategori"}
                             href={route("categories.create")}
                         />
                     )}
@@ -127,10 +129,10 @@ export default function Index({ categories }) {
                 <div className="w-full sm:w-80">
                     <Search
                         url={route("categories.index")}
-                        placeholder="Cari kategori..."
+                        placeholder={isWarehouseMode ? "ค้นหาหมวด" : "Cari kategori..."}
                     />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 ${isWarehouseMode ? "hidden" : ""}`}>
                     <button
                         onClick={() => setViewMode("grid")}
                         className={`p-2.5 rounded-lg transition-colors ${
@@ -172,13 +174,17 @@ export default function Index({ categories }) {
                     </div>
                 ) : (
                     /* List View */
-                    <Table.Card title={"Data Kategori"}>
+                    <Table.Card title={isWarehouseMode ? "หมวด" : "Data Kategori"}>
                         <Table>
                             <Table.Thead>
                                 <tr>
                                     <Table.Th className="w-10">No</Table.Th>
-                                    <Table.Th>Kategori</Table.Th>
-                                    <Table.Th>Deskripsi</Table.Th>
+                                    <Table.Th>{isWarehouseMode ? "ชื่อหมวด" : "Kategori"}</Table.Th>
+                                    {isWarehouseMode ? (
+                                        <Table.Th>จำนวนรายการ</Table.Th>
+                                    ) : (
+                                        <Table.Th>Deskripsi</Table.Th>
+                                    )}
                                     <Table.Th></Table.Th>
                                 </tr>
                             </Table.Thead>
@@ -195,6 +201,7 @@ export default function Index({ categories }) {
                                         </Table.Td>
                                         <Table.Td>
                                             <div className="flex items-center gap-3">
+                                                {!isWarehouseMode && (
                                                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
                                                     {category.image ? (
                                                         <img
@@ -211,15 +218,22 @@ export default function Index({ categories }) {
                                                         </div>
                                                     )}
                                                 </div>
+                                                )}
                                                 <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
                                                     {category.name}
                                                 </p>
                                             </div>
                                         </Table.Td>
                                         <Table.Td>
+                                            {isWarehouseMode ? (
+                                                <span className="text-sm text-slate-700 dark:text-slate-300">
+                                                    {category.products_count ?? 0}
+                                                </span>
+                                            ) : (
                                             <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
                                                 {category.description || "-"}
                                             </p>
+                                            )}
                                         </Table.Td>
                                         <Table.Td>
                                             <div className="flex gap-2">
@@ -282,10 +296,10 @@ export default function Index({ categories }) {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Kategori
+                        {isWarehouseMode ? "ยังไม่มีหมวด" : "Belum Ada Kategori"}
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan kategori pertama Anda.
+                        {isWarehouseMode ? "เพิ่มหมวดแรก เช่น เหล็กกลม หรือเพลท" : "Tambahkan kategori pertama Anda."}
                     </p>
                     <Button
                         type={"link"}
@@ -293,7 +307,7 @@ export default function Index({ categories }) {
                         className={
                             "bg-primary-500 hover:bg-primary-600 text-white"
                         }
-                        label={"Tambah Kategori"}
+                        label={isWarehouseMode ? "เพิ่มหมวด" : "Tambah Kategori"}
                         href={route("categories.create")}
                     />
                 </div>

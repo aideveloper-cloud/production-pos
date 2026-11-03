@@ -61,6 +61,27 @@ class ProductStoreTest extends TestCase
         ], $overrides);
     }
 
+    public function test_product_domain_can_be_created_updated_and_filtered(): void
+    {
+        $payload = $this->validPayload(['domain' => 'RM']);
+        $this->post(route('products.store'), $payload)->assertSessionHasNoErrors();
+        $product = Product::latest('id')->firstOrFail();
+        $this->assertSame('RM', $product->domain);
+        unset($payload['image']);
+        $this->assertSame('KG', $product->base_uom);
+        $payload['domain'] = 'FG';
+        $this->put(route('products.update', $product), $payload)->assertSessionHasNoErrors();
+        $this->assertSame('FG', $product->fresh()->domain);
+        $this->get(route('products.index', ['domain' => 'FG']))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->has('products.data', 1)->where('products.data.0.domain', 'FG'));
+        $this->get(route('products.index', ['domain' => 'RM']))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->has('products.data', 0));
+        $payload['domain'] = 'INVALID';
+        $this->put(route('products.update', $product), $payload)->assertSessionHasErrors('domain');
+        $this->assertSame('FG', $product->fresh()->domain);
+    }
+
     public function test_store_creates_pivot_row_in_default_warehouse(): void
     {
         $this->post(route('products.store'), $this->validPayload())
@@ -73,6 +94,8 @@ class ProductStoreTest extends TestCase
             ->first();
         $this->assertNotNull($pivot);
         $this->assertEquals(100, $pivot->stock);
+        $this->assertSame('FG', $product->domain);
+        $this->assertSame('PCS', $product->base_uom);
         $this->assertEquals(100, $product->fresh()->stock);
     }
 
@@ -158,5 +181,38 @@ class ProductStoreTest extends TestCase
 
         $this->post(route('products.store'), $payload)
             ->assertSessionHasErrors('image');
+    }
+
+    public function test_warehouse_form_creates_a_cuttable_unit_without_retail_fields(): void
+    {
+        config(['warehouse.mode' => 'warehouse', 'warehouse.is_warehouse' => true]);
+
+        $this->post(route('products.store'), [
+            'sku' => 'RM-TEST-PIPE',
+            'title' => 'ท่อทดสอบ',
+            'domain' => 'RM',
+            'category_name' => 'เหล็กกลม',
+            'count_unit' => 'เส้น',
+            'stock' => 12,
+            'warehouse_id' => $this->warehouse->id,
+        ])->assertRedirect(route('products.index'));
+
+        $product = Product::where('sku', 'RM-TEST-PIPE')->firstOrFail();
+        $this->assertSame('RM', $product->domain);
+        $this->assertSame('PCS', $product->base_uom);
+        $this->assertTrue((bool) $product->tracks_physical_units);
+        $this->assertSame(12, $product->stock);
+        $this->assertDatabaseHas('product_warehouse', [
+            'product_id' => $product->id,
+            'warehouse_id' => $this->warehouse->id,
+            'stock' => 12,
+        ]);
+        $this->assertDatabaseHas('physical_units', [
+            'product_id' => $product->id,
+            'warehouse_id' => $this->warehouse->id,
+            'unit_code' => 'RM-TEST-PIPE',
+            'status' => 'ACTIVE',
+            'actual_weight' => 12,
+        ]);
     }
 }

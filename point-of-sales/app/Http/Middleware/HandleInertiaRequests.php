@@ -12,6 +12,7 @@ use App\Models\Receivable;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Services\CashierShiftService;
+use App\Services\Inventory\DailyWarehouseDigest;
 use App\Services\OutletAccessService;
 use App\Services\PayableAgingService;
 use App\Services\ReceivableService;
@@ -46,11 +47,15 @@ class HandleInertiaRequests extends Middleware
         $activeShift = null;
         $activeOutlet = null;
         $availableOutlets = collect();
+        $dailyStockDigest = null;
 
         if ($request->user()) {
             $userId = $request->user()->id;
             $outletAccess = app(OutletAccessService::class);
             $warehouseIds = $outletAccess->warehousesFor($request->user())->pluck('id');
+            if (config('warehouse.is_warehouse')) {
+                $dailyStockDigest = app(DailyWarehouseDigest::class)->forWarehouses($warehouseIds);
+            }
             $outletIds = $outletAccess->accessibleOutlets($request->user())->pluck('id');
             $includeLegacy = Outlet::active()->count() <= 1;
 
@@ -210,7 +215,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $storeProfile = [
-            'name' => 'Toko Anda',
+            'name' => config('warehouse.is_warehouse') ? 'K Garden' : 'Toko Anda',
             'logo' => null,
             'address' => '',
             'phone' => '',
@@ -230,7 +235,7 @@ class HandleInertiaRequests extends Middleware
             }
 
             $storeProfile = [
-                'name' => Setting::getForOutlet('store_name', $outlet, 'Toko Anda'),
+                'name' => ($name = Setting::getForOutlet('store_name', $outlet, 'Toko Anda')) === 'Toko Anda' && config('warehouse.is_warehouse') ? 'K Garden' : $name,
                 'logo' => $logo,
                 'address' => Setting::getForOutlet('store_address', $outlet, ''),
                 'phone' => Setting::getForOutlet('store_phone', $outlet, ''),
@@ -284,6 +289,7 @@ class HandleInertiaRequests extends Middleware
             'appVersion' => config('app.version'),
             'appMode' => config('warehouse.mode', 'retail'),
             'isWarehouseMode' => (bool) config('warehouse.is_warehouse'),
+            'dailyStockDigest' => $dailyStockDigest,
             'accessibleWarehouses' => $request->user()
                 ? app(OutletAccessService::class)->warehousesFor($request->user())
                     ->map(fn ($w) => ['id' => $w->id, 'code' => $w->code, 'name' => $w->name])

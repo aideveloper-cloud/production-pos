@@ -30,7 +30,6 @@ class DashboardController extends Controller
                 'warehouses' => $warehouseOverviewService->warehouseKpis(request()->user()),
                 'recentMovements' => $warehouseOverviewService->recentMovements(request()->user()),
                 'isAdmin' => request()->user()->isSuperAdmin(),
-                'floorUrl' => route('pos.index'),
             ]);
         }
 

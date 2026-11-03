@@ -30,6 +30,8 @@ class WarehouseExportTest extends TestCase
 
     private Warehouse $chokdee;
 
+    private Product $finished;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -59,6 +61,13 @@ class WarehouseExportTest extends TestCase
         $posting->receive($product, $this->phranon->id, 45, StockLedgerMovement::Receive, $ctx, null, 'OPENING');
         $posting->receive($product, $this->chokdee->id, 5, StockLedgerMovement::Receive, $ctx, null, 'OPENING');
         $posting->issue($product, $this->phranon->id, 3, StockLedgerMovement::Issue, new PostingContext('warehouse_floor_cut', null, 'cut', $this->admin->id, 'สมชาย'));
+
+        $this->finished = Product::create([
+            'category_id' => $category->id, 'image' => 'p.png', 'barcode' => 'FG-MESH-1', 'sku' => 'FG-MESH-1',
+            'title' => 'ตะแกรง 1x2', 'description' => 'FG', 'buy_price' => 0, 'sell_price' => 0, 'stock' => 0,
+            'domain' => 'FG', 'base_uom' => 'PCS', 'tracks_physical_units' => false,
+        ]);
+        $posting->receive($this->finished, $this->phranon->id, 7, StockLedgerMovement::Receive, $ctx, null, 'OPENING');
     }
 
     public static function exports(): array
@@ -91,15 +100,16 @@ class WarehouseExportTest extends TestCase
     {
         $rows = $this->rows(route('export.warehouse.balances', ['format' => 'csv']));
 
-        $byWarehouse = collect($rows)->keyBy(0);
-        $this->assertSame('42', $byWarehouse['WH-PHRANON'][6]);
-        $this->assertSame('5', $byWarehouse['WH-CHOKDEE'][6]);
+        $rm = collect($rows)->filter(fn (array $row) => ($row[2] ?? null) === 'RM-W18-H')->keyBy(0);
+        $this->assertSame('RM', $rm['WH-PHRANON'][4]);
+        $this->assertSame('42', $rm['WH-PHRANON'][7]);
+        $this->assertSame('5', $rm['WH-CHOKDEE'][7]);
     }
 
     #[Test]
     public function materials_have_a_column_per_warehouse_and_a_total(): void
     {
-        $rows = $this->rows(route('export.warehouse.materials', ['format' => 'csv']));
+        $rows = $this->rows(route('export.warehouse.materials', ['format' => 'csv', 'domain' => 'RM']));
 
         $this->assertSame(['WH-PHRANON', 'WH-CHOKDEE'], array_slice($rows[0], -2));
         $this->assertSame(['47', '42', '5'], array_slice($rows[1], -3));
@@ -112,8 +122,55 @@ class WarehouseExportTest extends TestCase
         $rows = $this->rows(route('export.warehouse.stock-ledgers', ['format' => 'csv', 'movement_type' => 'ISSUE']));
 
         $this->assertCount(2, $rows, 'heading + the one cut');
-        $this->assertSame('-3', $rows[1][8]);
-        $this->assertSame('สมชาย', $rows[1][13]);
+        $this->assertSame('RM', $rows[1][5]);
+        $this->assertSame('-3', $rows[1][9]);
+        $this->assertSame('สมชาย', $rows[1][14]);
+    }
+
+    #[Test]
+    public function every_export_can_be_limited_to_rm_or_fg(): void
+    {
+        $skus = fn (string $route, string $domain, int $skuColumn) => collect($this->rows(route($route, ['format' => 'csv', 'domain' => $domain])))
+            ->slice(1)->pluck($skuColumn)->unique()->values()->all();
+
+        $this->assertSame(['FG-MESH-1'], $skus('export.warehouse.materials', 'FG', 0));
+        $this->assertSame(['RM-W18-H'], $skus('export.warehouse.materials', 'RM', 0));
+        $this->assertSame(['FG-MESH-1'], $skus('export.warehouse.balances', 'FG', 2));
+        $this->assertSame(['FG-MESH-1'], $skus('export.warehouse.stock-ledgers', 'FG', 3));
+        $this->assertSame(['RM-W18-H'], $skus('export.warehouse.stock-ledgers', 'rm', 3));
+        $this->assertSame(['RM-W18-H'], $skus('export.warehouse.units', 'RM', 1));
+        $this->assertSame([], $skus('export.warehouse.units', 'FG', 1), 'FG here is qty-based, no units');
+    }
+
+    #[Test]
+    public function movement_history_page_filters_by_domain(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('stock-ledgers.index', ['domain' => 'FG']))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('filters.domain', 'FG')
+                ->has('ledgers.data', 1)
+                ->where('ledgers.data.0.product.domain', 'FG'));
+
+        $this->get(route('stock-ledgers.index'))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('filters.domain', null)
+                ->has('ledgers.data', 4));
+    }
+
+    #[Test]
+    public function labels_page_filters_by_domain(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('labels.index', ['domain' => 'FG']))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('domain', 'FG')
+                ->has('units', 0));
+
+        $this->get(route('labels.index', ['domain' => 'RM']))
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->where('domain', 'RM')
+                ->where('units.0.domain', 'RM'));
     }
 
     #[Test]

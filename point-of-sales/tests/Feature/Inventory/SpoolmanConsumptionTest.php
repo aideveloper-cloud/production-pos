@@ -159,6 +159,26 @@ class SpoolmanConsumptionTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_consuming_more_than_the_spool_holds(): void
+    {
+        $this->withToken('test-integration-token')
+            ->postJson('/api/integrations/spoolman/events', [
+                'event' => 'SPOOL_CONSUMPTION',
+                'event_id' => 'sm-con-too-much',
+                'spool_id' => 123,
+                'warehouse_id' => $this->warehouse->id,
+                'qty' => 13,
+                'uom' => 'KG',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('data.process_status', 'REJECTED');
+
+        $this->assertSame(0, StockLedger::count(), 'nothing posted');
+        $this->assertSame('12.5000', number_format((float) $this->unit->fresh()->actual_weight, 4, '.', ''));
+        $this->assertSame('ACTIVE', $this->unit->fresh()->status);
+    }
+
+    #[Test]
     public function it_requires_integration_token(): void
     {
         $this->postJson('/api/integrations/spoolman/events', [

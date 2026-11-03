@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PhysicalUnit;
 use App\Models\Product;
 use App\Models\Warehouse;
+use App\Services\Inventory\StockLedgerFilter;
 use App\Services\OutletAccessService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,9 +28,11 @@ class UnitLabelController extends Controller
             abort(403);
         }
 
+        $domain = StockLedgerFilter::domain($request->input('domain'));
+
         $query = PhysicalUnit::query()
             ->with([
-                'product:id,sku,title,base_uom',
+                'product:id,sku,title,domain,base_uom',
                 'warehouse:id,code,name',
             ])
             ->whereIn('warehouse_id', $warehouses->pluck('id'))
@@ -38,6 +41,10 @@ class UnitLabelController extends Controller
 
         if ($warehouseId > 0) {
             $query->where('warehouse_id', $warehouseId);
+        }
+
+        if ($domain) {
+            $query->whereHas('product', fn ($q) => $q->where('domain', $domain));
         }
 
         if ($search = trim((string) $request->input('q', ''))) {
@@ -60,6 +67,7 @@ class UnitLabelController extends Controller
             'spoolman_spool_id' => $unit->spoolman_spool_id,
             'sku' => $unit->product?->sku,
             'product_title' => $unit->product?->title,
+            'domain' => $unit->product?->domain,
             'warehouse_id' => $unit->warehouse_id,
             'warehouse_name' => $unit->warehouse?->name,
             'barcode' => $unit->unit_code,
@@ -73,10 +81,11 @@ class UnitLabelController extends Controller
             ])->values(),
             'currentWarehouseId' => $warehouseId ?: null,
             'search' => $search,
+            'domain' => $domain ?? '',
             'units' => $units,
             'products' => Product::query()
                 ->where(function ($q) {
-                    $q->where('domain', 'RM')
+                    $q->whereIn('domain', ['RM', 'FG'])
                         ->orWhere('tracks_physical_units', true)
                         ->orWhere('spoolman_enabled', true);
                 })

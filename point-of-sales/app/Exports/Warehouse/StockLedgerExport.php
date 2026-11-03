@@ -22,7 +22,7 @@ class StockLedgerExport extends WarehouseExport implements FromQuery
     public function query(): Builder
     {
         return StockLedgerFilter::apply(StockLedger::query(), $this->filters, $this->warehouseIds)
-            ->with(['product:id,sku,title', 'warehouse:id,code,name', 'physicalUnit:id,unit_code,lot_code', 'creator:id,name'])
+            ->with(['product:id,sku,title,domain', 'warehouse:id,code,name', 'physicalUnit:id,unit_code,lot_code', 'creator:id,name'])
             ->orderByDesc('posted_at')
             ->orderByDesc('id');
     }
@@ -34,7 +34,7 @@ class StockLedgerExport extends WarehouseExport implements FromQuery
 
     protected function columns(): array
     {
-        return ['posted_at', 'warehouse_code', 'warehouse', 'sku', 'title', 'unit_code', 'lot', 'type', 'qty', 'uom', 'balance', 'reference', 'document', 'by', 'notes'];
+        return ['posted_at', 'warehouse_code', 'warehouse', 'sku', 'title', 'domain', 'unit_code', 'lot', 'type', 'qty', 'uom', 'balance', 'reference', 'document', 'by', 'notes'];
     }
 
     /** @param  StockLedger  $ledger */
@@ -46,6 +46,7 @@ class StockLedgerExport extends WarehouseExport implements FromQuery
             $ledger->warehouse?->name,
             $ledger->product?->sku,
             $ledger->product?->title,
+            $ledger->product?->domain,
             $ledger->physicalUnit?->unit_code,
             $ledger->physicalUnit?->lot_code,
             $this->label('types', $ledger->movement_type?->value),

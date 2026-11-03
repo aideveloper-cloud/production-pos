@@ -23,7 +23,8 @@ class SetLocale
             $locale = $request->session()->get('locale');
         } elseif ($request->cookie('locale')) {
             $locale = $request->cookie('locale');
-        } elseif ($request->hasHeader('Accept-Language')) {
+        } elseif (! config('warehouse.is_warehouse') && $request->hasHeader('Accept-Language')) {
+            // Warehouse tablets stay Thai whatever language the device OS is set to.
             $acceptLanguage = $request->header('Accept-Language');
             $preferredLocale = explode(',', $acceptLanguage)[0] ?? null;
             if ($preferredLocale) {
