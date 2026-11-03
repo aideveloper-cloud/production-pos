@@ -29,7 +29,7 @@ class DashboardController extends Controller
             return Inertia::render('Dashboard/WarehouseOverview', [
                 'warehouses' => $warehouseOverviewService->warehouseKpis(request()->user()),
                 'recentMovements' => $warehouseOverviewService->recentMovements(request()->user()),
-                'isAdmin' => request()->user()->isSuperAdmin(),
+                'isAdmin' => request()->user()->isWarehouseAdmin(),
             ]);
         }
 

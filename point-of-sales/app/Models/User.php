@@ -102,6 +102,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRole('super-admin');
     }
 
+    /**
+     * Warehouse admins see every warehouse and skip the POS PIN lock like a super-admin,
+     * but only hold the permissions their role grants (no user/role management).
+     */
+    public function isWarehouseAdmin(): bool
+    {
+        return $this->hasAnyRole(['super-admin', 'warehouse-admin']);
+    }
+
     public function hasPermissionTo($permission, $guardName = null): bool
     {
         if ($this->isSuperAdmin()) {

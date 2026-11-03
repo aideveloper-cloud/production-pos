@@ -9,7 +9,8 @@ export const port = Number(process.env.E2E_PORT || 8010);
 export const baseURL = `http://127.0.0.1:${port}`;
 
 export const credentials = {
-    adminEmail: "admin@wms.local",
+    // super-admin: the admin pages include users/roles/permissions, which warehouse-admins lack.
+    adminEmail: "superadmin@wms.local",
     adminPassword: "e2e-admin-password",
     // PINs are exactly 4 digits; the 4th digit unlocks.
     pins: { "WH-PHRANON": "4321", "WH-DECHA-MESH": "4829" },
@@ -29,7 +30,7 @@ export const serverEnv = {
     QUEUE_CONNECTION: "sync",
     MAIL_MAILER: "log",
     SPOOLMAN_ENABLED: "false",
-    WMS_ADMIN_PASSWORD: credentials.adminPassword,
+    WMS_SUPERADMIN_PASSWORD: credentials.adminPassword,
     WMS_POS_PINS: Object.entries(credentials.pins).map(([code, pin]) => `${code}:${pin}`).join(","),
 };
 

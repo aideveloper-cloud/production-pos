@@ -16,7 +16,9 @@ use Spatie\Permission\PermissionRegistrar;
 
 /**
  * WMS accounts:
- * - admin@wms.local → dashboard; password from WMS_ADMIN_PASSWORD
+ * - superadmin@wms.local → super-admin, everything incl. users/roles/permissions; password from WMS_SUPERADMIN_PASSWORD
+ * - admin@wms.local, admin2@wms.local → warehouse-admin: all warehouse work, no user/role/permission
+ *   management; passwords from WMS_ADMIN_PASSWORD / WMS_ADMIN2_PASSWORD
  * - pos@wms.local (device) → unlocked via warehouse PIN on /pos/rm or /pos/fg
  *
  * Warehouse POS PINs come from WMS_POS_PINS ("WH-PHRANON:1234,WH-CHOKDEE:5678"), exactly 4 digits;
@@ -77,9 +79,9 @@ class CompanyUserSeeder extends Seeder
             $warehouse->update(['pos_pin' => Hash::make($plain)]);
         }
 
-        // Keep only admin + POS device account.
+        // Keep only the admin accounts + POS device account.
         User::query()
-            ->whereNotIn('email', ['admin@wms.local', 'pos@wms.local'])
+            ->whereNotIn('email', ['superadmin@wms.local', 'admin@wms.local', 'admin2@wms.local', 'pos@wms.local'])
             ->orderBy('id')
             ->each(function (User $user) {
                 $user->syncRoles([]);
@@ -89,8 +91,15 @@ class CompanyUserSeeder extends Seeder
                 $user->delete();
             });
 
-        $allPermissions = Permission::all();
-        $superAdminRole = Role::where('name', 'super-admin')->first();
+        $superAdminRole = Role::where('name', 'super-admin')->firstOrFail();
+        $warehouseAdminRole = Role::firstOrCreate(['name' => 'warehouse-admin', 'guard_name' => 'web']);
+        $warehouseAdminRole->syncPermissions(
+            Permission::query()
+                ->where('name', 'not like', 'users-%')
+                ->where('name', 'not like', 'roles-%')
+                ->where('name', 'not like', 'permissions-%')
+                ->get()
+        );
         $posRole = Role::firstOrCreate(['name' => 'warehouse-pos', 'guard_name' => 'web']);
 
         $posPermissionNames = [
@@ -103,27 +112,16 @@ class CompanyUserSeeder extends Seeder
             ->get();
         $posRole->syncPermissions($posPermissions);
 
-        $admin = User::firstOrNew(['email' => 'admin@wms.local']);
-        $admin->fill(['name' => 'WMS Admin', 'locale' => 'th']);
-        $adminPassword = (string) env('WMS_ADMIN_PASSWORD', '');
-        if ($adminPassword !== '') {
-            $admin->password = Hash::make($adminPassword);
-        } elseif (! $admin->exists) {
-            $adminPassword = Str::password(16);
-            $admin->password = Hash::make($adminPassword);
-            $this->command?->warn("admin@wms.local password: {$adminPassword} (set WMS_ADMIN_PASSWORD to choose your own)");
+        $adminOutlets = $warehouses->pluck('outlet_id')->filter()->mapWithKeys(fn ($id, $i) => [
+            $id => ['is_default' => $i === 0],
+        ])->all();
+        foreach ([
+            ['superadmin@wms.local', 'WMS Super Admin', 'WMS_SUPERADMIN_PASSWORD', $superAdminRole],
+            ['admin@wms.local', 'WMS Admin', 'WMS_ADMIN_PASSWORD', $warehouseAdminRole],
+            ['admin2@wms.local', 'WMS Admin 2', 'WMS_ADMIN2_PASSWORD', $warehouseAdminRole],
+        ] as [$email, $name, $passwordEnv, $role]) {
+            $this->provisionAdmin($email, $name, $passwordEnv, $role, $adminOutlets);
         }
-        $admin->save();
-        $admin->markEmailAsVerified();
-        if ($superAdminRole) {
-            $admin->syncRoles([$superAdminRole->name]);
-        }
-        $admin->syncPermissions($allPermissions);
-        $admin->outlets()->sync(
-            $warehouses->pluck('outlet_id')->filter()->mapWithKeys(fn ($id, $i) => [
-                $id => ['is_default' => $i === 0],
-            ])->all()
-        );
 
         $posUser = User::updateOrCreate(
             ['email' => 'pos@wms.local'],
@@ -146,6 +144,32 @@ class CompanyUserSeeder extends Seeder
         Setting::set('app_setup_completed', true, 'Penanda wizard setup awal sudah diselesaikan');
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /**
+     * Admin account on every warehouse outlet whose access comes only from $role (direct
+     * permissions are cleared). The password comes from $passwordEnv; when unset an existing
+     * one is kept and a missing one is generated and printed.
+     *
+     * @param  array<int, array{is_default: bool}>  $outlets
+     */
+    private function provisionAdmin(string $email, string $name, string $passwordEnv, Role $role, array $outlets): void
+    {
+        $admin = User::firstOrNew(['email' => $email]);
+        $admin->fill(['name' => $admin->exists ? $admin->name : $name, 'locale' => 'th']);
+        $password = (string) env($passwordEnv, '');
+        if ($password !== '') {
+            $admin->password = Hash::make($password);
+        } elseif (! $admin->exists) {
+            $password = Str::password(16);
+            $admin->password = Hash::make($password);
+            $this->command?->warn("{$email} password: {$password} (set {$passwordEnv} to choose your own)");
+        }
+        $admin->save();
+        $admin->markEmailAsVerified();
+        $admin->syncRoles([$role->name]);
+        $admin->syncPermissions([]);
+        $admin->outlets()->sync($outlets);
     }
 
     /**

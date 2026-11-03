@@ -45,7 +45,7 @@ class WarehouseFloorController extends Controller
         $user = $request->user();
         $sessionWarehouseId = (int) $request->session()->get('pos.warehouse_id', 0);
 
-        if (! $user?->isSuperAdmin() && $sessionWarehouseId <= 0) {
+        if (! $user?->isWarehouseAdmin() && $sessionWarehouseId <= 0) {
             return Inertia::render('Pos/Unlock', [
                 'domain' => $domain,
                 'warehouses' => Warehouse::query()
@@ -136,7 +136,7 @@ class WarehouseFloorController extends Controller
 
         // A PIN-unlocked device only sees its own warehouse, whatever warehouse_id it sends.
         $lockedWarehouseId = (int) $request->session()->get('pos.warehouse_id', 0);
-        if ($lockedWarehouseId > 0 && ! $user->isSuperAdmin()) {
+        if ($lockedWarehouseId > 0 && ! $user->isWarehouseAdmin()) {
             $warehouseId = $lockedWarehouseId;
         }
 
@@ -228,7 +228,7 @@ class WarehouseFloorController extends Controller
 
         $warehouses = $this->outletAccessService->warehousesFor($user);
 
-        if ($lockedWarehouseId && ! $user->isSuperAdmin()) {
+        if ($lockedWarehouseId && ! $user->isWarehouseAdmin()) {
             $warehouses = $warehouses->where('id', $lockedWarehouseId)->values();
         }
 
@@ -239,7 +239,7 @@ class WarehouseFloorController extends Controller
             && in_array((string) $request->input('warehouse_id', 'all'), ['', 'all'], true);
 
         $warehouseId = (int) $request->integer('warehouse_id');
-        if ($lockedWarehouseId && ! $user->isSuperAdmin()) {
+        if ($lockedWarehouseId && ! $user->isWarehouseAdmin()) {
             $warehouseId = $lockedWarehouseId;
         } elseif ($warehouseId <= 0) {
             $warehouseId = (int) ($warehouses->first()?->id ?? 0);
@@ -310,7 +310,7 @@ class WarehouseFloorController extends Controller
             'currentWarehouseId' => $allWarehouses ? null : $warehouse->id,
             'units' => $units,
             'products' => $products,
-            'isAdmin' => $user->isSuperAdmin(),
+            'isAdmin' => $user->isWarehouseAdmin(),
             'presetsKg' => [1, 2, 5, 10, 20],
             'operatorName' => (string) $request->session()->get('pos.operator_name', ''),
             'requiresOperatorName' => true,
@@ -436,7 +436,7 @@ class WarehouseFloorController extends Controller
      */
     private function deviceDomain(Request $request): ?string
     {
-        if ($request->user()?->isSuperAdmin() || (int) $request->session()->get('pos.warehouse_id', 0) <= 0) {
+        if ($request->user()?->isWarehouseAdmin() || (int) $request->session()->get('pos.warehouse_id', 0) <= 0) {
             return null;
         }
 
@@ -447,7 +447,7 @@ class WarehouseFloorController extends Controller
 
     private function assertPosWarehouse(Request $request, int $warehouseId): void
     {
-        if ($request->user()?->isSuperAdmin()) {
+        if ($request->user()?->isWarehouseAdmin()) {
             return;
         }
 

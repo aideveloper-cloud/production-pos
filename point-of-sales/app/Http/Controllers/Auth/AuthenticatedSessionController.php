@@ -64,7 +64,7 @@ class AuthenticatedSessionController extends Controller
 
         // Warehouse mode: floor staff land on tablet POS; admin keeps overview dashboard.
         if (config('warehouse.is_warehouse')) {
-            if ($user && ! $user->isSuperAdmin() && $user->can('stock-mutations-access')) {
+            if ($user && ! $user->isWarehouseAdmin() && $user->can('stock-mutations-access')) {
                 return redirect()->intended(route('pos.index', absolute: false));
             }
 

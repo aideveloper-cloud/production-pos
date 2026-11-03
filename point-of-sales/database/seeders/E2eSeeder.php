@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 /**
  * Data for the Playwright end-to-end suite (e2e/): the same company warehouses, products and
  * opening stock as production, with throw-away credentials passed in by e2e/env.js
- * (WMS_ADMIN_PASSWORD, WMS_POS_PINS). Never run against a real database.
+ * (WMS_SUPERADMIN_PASSWORD, WMS_POS_PINS). Never run against a real database.
  */
 class E2eSeeder extends Seeder
 {

@@ -36,11 +36,11 @@ class WarehouseController extends Controller
             'sort_order' => ['integer', 'min:0'],
         ]);
 
-        $outlet = $request->user()->isSuperAdmin()
+        $outlet = $request->user()->isWarehouseAdmin()
             ? Outlet::find($request->input('outlet_id'))
             : $this->outletAccessService->activeOutlet($request);
         if ($outlet) {
-            abort_unless($request->user()->isSuperAdmin() || $request->user()->outlets()->whereKey($outlet->id)->exists(), 403);
+            abort_unless($request->user()->isWarehouseAdmin() || $request->user()->outlets()->whereKey($outlet->id)->exists(), 403);
             $validated['outlet_id'] = $outlet->id;
         }
 

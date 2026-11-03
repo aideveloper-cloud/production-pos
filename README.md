@@ -35,7 +35,7 @@ Spoolman ใช้ image `ghcr.io/donkie/spoolman` ตรงๆ (fork: [aidevelo
 docker compose up -d            # MySQL, Spoolman, HTTPS proxy
 
 cd point-of-sales
-cp .env.example .env            # APP_MODE=warehouse, DB_*, SPOOLMAN_*, WMS_ADMIN_PASSWORD, WMS_POS_PINS
+cp .env.example .env            # APP_MODE=warehouse, DB_*, SPOOLMAN_*, WMS_SUPERADMIN_PASSWORD, WMS_ADMIN_PASSWORD, WMS_ADMIN2_PASSWORD, WMS_POS_PINS
 composer install
 npm install && npm run build
 php artisan key:generate
@@ -59,7 +59,9 @@ php artisan serve --host=0.0.0.0 --port=8000
 ไม่มีรหัสผ่านหรือ PIN ในโค้ด — ตั้งใน `.env` ก่อนรัน `CompanyUserSeeder`:
 
 ```dotenv
-WMS_ADMIN_PASSWORD=...                                  # admin@wms.local
+WMS_SUPERADMIN_PASSWORD=...                             # superadmin@wms.local (super-admin, จัดการผู้ใช้/บทบาท/สิทธิ์ได้)
+WMS_ADMIN_PASSWORD=...                                  # admin@wms.local  (admin คลัง ไม่มีเมนูจัดการผู้ใช้)
+WMS_ADMIN2_PASSWORD=...                                 # admin2@wms.local (admin คลัง ไม่มีเมนูจัดการผู้ใช้)
 WMS_POS_PINS=WH-PHRANON:xxxx,WH-DECHA-MESH:xxxx,WH-DECHA-POST:xxxx,WH-CHOKDEE:xxxx   # PIN 4-6 หลัก ใช้ได้ทั้ง POS RM และ FG
 ```
 

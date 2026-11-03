@@ -54,7 +54,7 @@ class OutletController extends Controller
 
             $warehouse->products()->syncWithPivotValues(Product::pluck('id'), ['stock' => 0]);
 
-            if (! $request->user()->isSuperAdmin()) {
+            if (! $request->user()->isWarehouseAdmin()) {
                 $request->user()->outlets()->syncWithoutDetaching([
                     $outlet->id => ['is_default' => true],
                 ]);
@@ -106,7 +106,7 @@ class OutletController extends Controller
 
     private function ensureAccess(User $user, Outlet $outlet): void
     {
-        abort_unless($user->isSuperAdmin() || $user->outlets()->whereKey($outlet->id)->exists(), 404);
+        abort_unless($user->isWarehouseAdmin() || $user->outlets()->whereKey($outlet->id)->exists(), 404);
     }
 
     private function hasOperationalHistory(Outlet $outlet): bool

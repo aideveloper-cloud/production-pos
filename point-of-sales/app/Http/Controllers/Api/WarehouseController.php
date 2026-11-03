@@ -51,7 +51,7 @@ class WarehouseController extends Controller
         ]);
 
         $outlet = $validated['outlet_id'] ?? $request->user()->outlets()->first()?->id;
-        abort_unless($request->user()->isSuperAdmin() || $outlet === null || $request->user()->outlets()->whereKey($outlet)->exists(), 403);
+        abort_unless($request->user()->isWarehouseAdmin() || $outlet === null || $request->user()->outlets()->whereKey($outlet)->exists(), 403);
 
         $warehouse = Warehouse::create([
             ...$validated,

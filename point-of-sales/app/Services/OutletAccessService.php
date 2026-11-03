@@ -24,7 +24,7 @@ class OutletAccessService
             return false;
         }
 
-        if ($user->isSuperAdmin()) {
+        if ($user->isWarehouseAdmin()) {
             return true;
         }
 
@@ -57,7 +57,7 @@ class OutletAccessService
     public function warehousesFor(User $user): Collection
     {
         $query = Warehouse::query()->active()->orderBy('sort_order')->orderBy('code');
-        if (! $user->isSuperAdmin()) {
+        if (! $user->isWarehouseAdmin()) {
             $outletIds = $user->outlets()->pluck('outlets.id');
             if ($outletIds->isNotEmpty()) {
                 $query->whereIn('outlet_id', $outletIds);
@@ -69,7 +69,7 @@ class OutletAccessService
 
     public function defaultOutlet(User $user): ?Outlet
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isWarehouseAdmin()) {
             return Outlet::active()->orderBy('code')->first();
         }
 
@@ -82,7 +82,7 @@ class OutletAccessService
 
     public function accessibleOutlets(User $user): Collection
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isWarehouseAdmin()) {
             return Outlet::active()->orderBy('code')->get();
         }
 
