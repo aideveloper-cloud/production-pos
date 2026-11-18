@@ -80,3 +80,21 @@ WMS_POS_PINS=WH-PHRANON:xxxx,WH-DECHA-MESH:xxxx,WH-DECHA-POST:xxxx,WH-CHOKDEE:xx
 - `/dashboard/stock-ledgers` — ความเคลื่อนไหวสต็อก (จาก ledger)
 - `/dashboard/labels` — พิมพ์ป้ายหน่วย/ม้วน (บาร์โค้ด `unit_code` สแกนกลับเข้า POS ได้)
 - `/api/integrations/spoolman/*` — Spoolman webhook/sync (Bearer token)
+
+## K Garden central access (ERPNext) — `KGARDEN_ACCESS_ENABLED`
+
+When on, people and their WMS access are managed in ERPNext (User → "K Garden: สิทธิ์เข้าใช้แอป", app WMS
+with role operator / supervisor / admin and warehouse scope). See `config/kgarden.php`.
+
+- POS (`/pos/rm`, `/pos/fg`): choose the tablet's warehouse, then **employee code + PIN** (set in ERPNext);
+  ERPNext checks the person may use the WMS at that warehouse. Every cut/receipt is recorded under that
+  person; the tablet signs out after `KGARDEN_POS_IDLE_MINUTES` without a touch.
+- Dashboard: **"เข้าสู่ระบบด้วย K Garden"** (OpenID Connect). Password login only for `KGARDEN_LOCAL_LOGIN`
+  (break-glass, default superadmin@wms.local).
+- The WMS mirrors each person on sign-in (role, warehouses via `user_outlets`); `php artisan kgarden:sync-access`
+  (scheduled every minute) strips rights and ends sessions of people who lost access in ERPNext.
+- Needs: `KGARDEN_ERP_URL`, `KGARDEN_OIDC_CLIENT_ID/SECRET/REDIRECT_URI` (OAuth Client of KG App WMS),
+  `KGARDEN_ACCESS_API_KEY/SECRET` (ERPNext user with role KG Access Service), `KGARDEN_WAREHOUSE_SUFFIX`.
+
+While off, nothing changes: warehouse PINs unlock the POS as `pos@wms.local` and staff type their name.
+

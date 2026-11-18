@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import { useTranslation } from "react-i18next";
 import AuthBotGuardFields from "@/Components/AuthBotGuardFields";
 import {
@@ -12,10 +12,12 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 
-export default function Login({ status, canResetPassword, canRegister, botGuard, isWarehouseMode }) {
+export default function Login({ status, canResetPassword, canRegister, botGuard, isWarehouseMode, kgardenSso = null }) {
     const { t } = useTranslation();
     const honeypotField = botGuard?.honeypot_field || "company_website";
     const tokenField = botGuard?.token_field || "bot_guard_token";
+    // Errors from the ERPNext sign-in come back as page errors, not form errors.
+    const pageErrors = usePage().props.errors || {};
     const { data, setData, post, processing, errors, reset } = useForm({
         email: "",
         password: "",
@@ -82,6 +84,24 @@ export default function Login({ status, canResetPassword, canRegister, botGuard,
                         {status && (
                             <div className="mb-6 p-4 rounded-xl bg-success-50 dark:bg-success-950/50 text-success-700 dark:text-success-400 text-sm">
                                 {status}
+                            </div>
+                        )}
+
+                        {/* K Garden central access: people sign in through ERPNext. */}
+                        {kgardenSso && (
+                            <div className="mb-6 space-y-3">
+                                <a
+                                    href={kgardenSso}
+                                    className="flex w-full items-center justify-center rounded-xl bg-emerald-700 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-emerald-800"
+                                >
+                                    เข้าสู่ระบบด้วย K Garden
+                                </a>
+                                {pageErrors.email && !errors.email && (
+                                    <p className="text-sm text-rose-600">{pageErrors.email}</p>
+                                )}
+                                <p className="text-center text-xs text-slate-400">
+                                    บัญชีผู้ดูแลฉุกเฉินเท่านั้นที่ใช้รหัสผ่านด้านล่าง
+                                </p>
                             </div>
                         )}
 

@@ -37,6 +37,7 @@ use App\Http\Controllers\Apps\TransactionController;
 use App\Http\Controllers\Apps\UnitController;
 use App\Http\Controllers\Apps\UnitLabelController;
 use App\Http\Controllers\Apps\WarehouseFloorController;
+use App\Http\Controllers\Auth\KGardenSsoController;
 use App\Http\Controllers\Apps\WarehouseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DineMenuController;
@@ -96,6 +97,10 @@ Route::post('/portal/receivables/{receivable}/pay', [PublicPortalController::cla
 
 // Language switch
 Route::post('/language/switch', [LanguageController::class, 'switch'])->name('language.switch');
+
+// "เข้าสู่ระบบด้วย K Garden": sign-in through ERPNext (K Garden central access, config/kgarden.php).
+Route::get('/auth/kgarden/redirect', [KGardenSsoController::class, 'redirect'])->name('kgarden.redirect');
+Route::get('/auth/kgarden/callback', [KGardenSsoController::class, 'callback'])->name('kgarden.callback');
 
 // Tablet POS (warehouse cut/receive) — two separate POS: /pos/rm (raw material) and /pos/fg (finished goods).
 // PIN unlock, full-screen; a device unlocked on one POS stays on that POS.

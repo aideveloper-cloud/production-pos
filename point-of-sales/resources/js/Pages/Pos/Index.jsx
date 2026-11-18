@@ -27,6 +27,7 @@ export default function PosIndex({
     isAdmin = false,
     presetsKg = KG_PRESETS,
     operatorName: initialOperatorName = "",
+    operatorLocked = false,
     posDomain = "RM",
 }) {
     const { t } = useTranslation();
@@ -523,13 +524,20 @@ export default function PosIndex({
                             <span className="mb-1 block font-medium text-slate-600">
                                 {t("warehouse.pos.operatorName")}
                             </span>
-                            <input
-                                value={operatorName}
-                                onChange={(e) => updateOperator(e.target.value)}
-                                placeholder={t("warehouse.pos.operatorPlaceholder")}
-                                className="w-full rounded-xl border-slate-200 text-base"
-                                autoComplete="name"
-                            />
+                            {operatorLocked ? (
+                                // Signed in with employee code + PIN: the operator is that person.
+                                <p className="rounded-xl bg-slate-100 px-3 py-2 text-base font-semibold text-slate-800">
+                                    {operatorName}
+                                </p>
+                            ) : (
+                                <input
+                                    value={operatorName}
+                                    onChange={(e) => updateOperator(e.target.value)}
+                                    placeholder={t("warehouse.pos.operatorPlaceholder")}
+                                    className="w-full rounded-xl border-slate-200 text-base"
+                                    autoComplete="name"
+                                />
+                            )}
                         </label>
 
                         <div className="mb-4 flex items-end justify-center gap-2 py-2">

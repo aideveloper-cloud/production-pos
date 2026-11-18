@@ -8,14 +8,19 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\Inventory\WarehouseStockMovementService;
+use App\Services\KGarden\AccessClient;
+use App\Services\KGarden\TooManyAttempts;
+use App\Services\KGarden\UserProvisioner;
 use App\Services\OutletAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class WarehouseFloorController extends Controller
 {
@@ -42,12 +47,17 @@ class WarehouseFloorController extends Controller
     public function pos(Request $request, string $domain): Response|RedirectResponse
     {
         $domain = $this->routeDomain($domain);
+        if ($this->posIdleExpired($request)) {
+            $this->endPosPerson($request);
+        }
         $user = $request->user();
         $sessionWarehouseId = (int) $request->session()->get('pos.warehouse_id', 0);
 
         if (! $user?->isWarehouseAdmin() && $sessionWarehouseId <= 0) {
             return Inertia::render('Pos/Unlock', [
                 'domain' => $domain,
+                // K Garden central access: people unlock with employee code + PIN from ERPNext.
+                'centralAccess' => (bool) config('kgarden.enabled'),
                 'warehouses' => Warehouse::query()
                     ->whereIn('code', ['WH-PHRANON', 'WH-DECHA-MESH', 'WH-DECHA-POST', 'WH-CHOKDEE'])
                     ->where('is_active', true)
@@ -74,6 +84,9 @@ class WarehouseFloorController extends Controller
     public function unlock(Request $request, string $domain): RedirectResponse
     {
         $domain = $this->routeDomain($domain);
+        if (config('kgarden.enabled')) {
+            return $this->unlockAsPerson($request, $domain);
+        }
         $validated = $request->validate([
             'pin' => ['required', 'string', 'digits:4'],
         ]);
@@ -103,9 +116,78 @@ class WarehouseFloorController extends Controller
         return redirect()->route('pos.show', ['domain' => strtolower($domain)]);
     }
 
+    /**
+     * K Garden central access: the person at the tablet is identified by employee code + PIN, checked
+     * by ERPNext for WMS access at the chosen warehouse. The WMS mirrors the person (role,
+     * warehouses) and records them as the operator of every cut and receipt.
+     */
+    private function unlockAsPerson(Request $request, string $domain): RedirectResponse
+    {
+        $validated = $request->validate([
+            'employee_code' => ['required', 'string', 'max:50'],
+            'pin' => ['required', 'string', 'regex:/^[0-9]{4,6}$/'],
+            'warehouse_id' => ['required', 'integer', 'exists:warehouses,id'],
+        ]);
+        $warehouse = Warehouse::query()->where('is_active', true)->findOrFail($validated['warehouse_id']);
+        $provisioner = app(UserProvisioner::class);
+
+        try {
+            $person = app(AccessClient::class)->verifyPin(
+                strtoupper(trim($validated['employee_code'])),
+                $validated['pin'],
+                $provisioner->erpWarehouseName($warehouse),
+            );
+        } catch (TooManyAttempts) {
+            throw ValidationException::withMessages(['pin' => 'ลองผิดหลายครั้งเกินไป รอสักครู่แล้วลองใหม่']);
+        } catch (Throwable $e) {
+            Log::warning('K Garden PIN check failed', ['error' => $e->getMessage()]);
+            throw ValidationException::withMessages(['pin' => 'ตรวจสอบกับ ERPNext ไม่ได้ ลองใหม่อีกครั้ง']);
+        }
+        if (! $person) {
+            throw ValidationException::withMessages([
+                'pin' => 'ไม่พบรหัสพนักงาน หรือ PIN ไม่ถูกต้อง หรือไม่มีสิทธิ์ใช้โกดังนี้',
+            ]);
+        }
+
+        $user = $provisioner->sync($person);
+        Auth::login($user);
+        $request->session()->regenerate();
+        $label = $person['full_name'].(($person['employee_code'] ?? '') !== '' ? ' ('.$person['employee_code'].')' : '');
+        $request->session()->put([
+            'pos.warehouse_id' => $warehouse->id,
+            'pos.domain' => $domain,
+            'pos.operator_name' => $label,
+            'pos.person' => true,
+            'pos.last_seen' => now()->timestamp,
+        ]);
+
+        return redirect()->route('pos.show', ['domain' => strtolower($domain)]);
+    }
+
+    private function posIdleExpired(Request $request): bool
+    {
+        $last = (int) $request->session()->get('pos.last_seen', 0);
+
+        return (bool) $request->session()->get('pos.person')
+            && $last > 0
+            && now()->timestamp - $last > (int) config('kgarden.pos_idle_minutes', 10) * 60;
+    }
+
+    private function endPosPerson(Request $request): void
+    {
+        $request->session()->forget(['pos.warehouse_id', 'pos.operator_name', 'pos.person', 'pos.last_seen']);
+        Auth::guard('web')->logout();
+        $request->session()->regenerateToken();
+    }
+
     public function lock(Request $request): RedirectResponse
     {
         $domain = strtolower((string) $request->session()->get('pos.domain', 'RM'));
+        if ($request->session()->get('pos.person')) {
+            $this->endPosPerson($request);
+
+            return redirect()->route('pos.show', ['domain' => $domain]);
+        }
         $request->session()->forget(['pos.warehouse_id', 'pos.operator_name']);
 
         if ($request->user()?->email === 'pos@wms.local') {
@@ -314,6 +396,8 @@ class WarehouseFloorController extends Controller
             'presetsKg' => [1, 2, 5, 10, 20],
             'operatorName' => (string) $request->session()->get('pos.operator_name', ''),
             'requiresOperatorName' => true,
+            // Signed in as a person (K Garden central access): the operator is that person, not typed.
+            'operatorLocked' => (bool) $request->session()->get('pos.person'),
             'posDomain' => $posDomain,
         ]);
     }
@@ -329,7 +413,7 @@ class WarehouseFloorController extends Controller
             'physical_unit_id' => ['nullable', 'integer', 'exists:physical_units,id'],
             'lot_code' => ['nullable', 'string', 'max:100'],
             'create_unit' => ['nullable', 'boolean'],
-            'operator_name' => ['required', 'string', 'min:2', 'max:100'],
+            'operator_name' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -373,7 +457,7 @@ class WarehouseFloorController extends Controller
             'physical_unit_id' => ['required', 'integer', 'exists:physical_units,id'],
             'qty' => ['required', 'numeric', 'gt:0'],
             'uom' => ['nullable', 'string', 'max:20'],
-            'operator_name' => ['required', 'string', 'min:2', 'max:100'],
+            'operator_name' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -462,6 +546,21 @@ class WarehouseFloorController extends Controller
      */
     private function requireOperator(Request $request, array $validated): string
     {
+        if ($request->session()->get('pos.person')) {
+            if ($this->posIdleExpired($request)) {
+                $this->endPosPerson($request);
+                abort(401, 'หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่');
+            }
+            $request->session()->put('pos.last_seen', now()->timestamp);
+
+            return (string) $request->session()->get('pos.operator_name');
+        }
+        if (config('kgarden.enabled') && $request->user()?->kgarden_managed) {
+            // Signed in through ERPNext on the dashboard: the operator is that person.
+            $user = $request->user();
+
+            return $user->name.($user->employee_code ? ' ('.$user->employee_code.')' : '');
+        }
         $operator = trim((string) ($validated['operator_name'] ?? ''));
         if (mb_strlen($operator) < 2) {
             throw ValidationException::withMessages([

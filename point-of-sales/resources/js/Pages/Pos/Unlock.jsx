@@ -12,7 +12,130 @@ const DOMAINS = {
     FG: { label: "FG สินค้าสำเร็จรูป", tone: "bg-sky-500 text-white" },
 };
 
-export default function PosUnlock({ warehouses = [], domain = "RM" }) {
+export default function PosUnlock({ warehouses = [], domain = "RM", centralAccess = false }) {
+    if (centralAccess) {
+        return <PersonUnlock warehouses={warehouses} domain={domain} />;
+    }
+    return <WarehousePinUnlock warehouses={warehouses} domain={domain} />;
+}
+
+// K Garden central access: the person signs in with their employee code + PIN (set in ERPNext) at the
+// warehouse this tablet serves; ERPNext decides whether they may use the WMS there.
+const PERSON_PIN_MAX = 6;
+const DEVICE_WAREHOUSE_KEY = "kg.pos.warehouse";
+
+function PersonUnlock({ warehouses, domain }) {
+    const info = DOMAINS[domain] || DOMAINS.RM;
+    const [warehouseId, setWarehouseId] = useState(() => {
+        try {
+            const saved = Number(localStorage.getItem(DEVICE_WAREHOUSE_KEY));
+            return warehouses.some((w) => w.id === saved) ? saved : warehouses[0]?.id ?? null;
+        } catch {
+            return warehouses[0]?.id ?? null;
+        }
+    });
+    const [code, setCode] = useState("");
+    const [pin, setPin] = useState("");
+    const [error, setError] = useState("");
+    const [processing, setProcessing] = useState(false);
+
+    function submit() {
+        if (processing || !code.trim() || pin.length < 4 || !warehouseId) return;
+        setProcessing(true);
+        setError("");
+        try {
+            localStorage.setItem(DEVICE_WAREHOUSE_KEY, String(warehouseId));
+        } catch {}
+        router.post(
+            route("pos.unlock", { domain: String(domain).toLowerCase() }),
+            { employee_code: code.trim(), pin, warehouse_id: warehouseId },
+            {
+                preserveScroll: true,
+                onError: (errs) => {
+                    setError(errs.pin || errs.employee_code || errs.warehouse_id || "เข้าสู่ระบบไม่สำเร็จ");
+                    setPin("");
+                    setProcessing(false);
+                },
+                onFinish: () => setProcessing(false),
+            }
+        );
+    }
+
+    return (
+        <div className="flex min-h-[100dvh] flex-col bg-slate-900 text-white">
+            <Head title={`POS ${info.label}`} />
+            <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-5 py-8">
+                <div className="mb-6 text-center">
+                    <div className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${info.tone}`}>
+                        <IconScale size={28} />
+                    </div>
+                    <h1 className="text-2xl font-bold">POS {info.label}</h1>
+                    <p className="mt-2 text-sm text-slate-300">เข้าสู่ระบบด้วยรหัสพนักงานและ PIN ของคุณ</p>
+                </div>
+
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">โกดังของเครื่องนี้</p>
+                <div className="mb-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="โกดัง">
+                    {warehouses.map((wh) => (
+                        <button
+                            key={wh.id}
+                            type="button"
+                            role="radio"
+                            aria-checked={warehouseId === wh.id}
+                            onClick={() => setWarehouseId(wh.id)}
+                            className={`rounded-xl px-3 py-2 text-left text-sm ${
+                                warehouseId === wh.id ? "bg-emerald-500 font-semibold text-slate-950" : "bg-slate-800 text-slate-200"
+                            }`}
+                        >
+                            {wh.name.replace(/^โกดัง\s*/, "")}
+                        </button>
+                    ))}
+                </div>
+
+                <label className="mb-3 block">
+                    <span className="mb-1 block text-sm text-slate-300">รหัสพนักงาน</span>
+                    <input
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.toUpperCase())}
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        className="h-12 w-full rounded-xl border-0 bg-white px-4 text-lg font-semibold text-slate-900"
+                        data-testid="employee-code"
+                    />
+                </label>
+
+                <div className="mb-3 flex justify-center gap-2" aria-label="PIN">
+                    {Array.from({ length: PERSON_PIN_MAX }, (_, i) => i).map((i) => (
+                        <span key={i} className={`h-3 w-3 rounded-full ${pin.length > i ? "bg-emerald-400" : "bg-slate-600"}`} />
+                    ))}
+                </div>
+
+                {error && (
+                    <p className="mb-3 text-center text-sm text-rose-300" role="alert">
+                        {error}
+                    </p>
+                )}
+
+                <div className="rounded-3xl bg-white p-4 text-slate-900">
+                    <PosKeypad
+                        value={pin}
+                        onChange={(next) => {
+                            setPin(next);
+                            setError("");
+                        }}
+                        disabled={processing}
+                        pinLength={PERSON_PIN_MAX}
+                        onSubmit={submit}
+                        submitDisabled={!code.trim() || pin.length < 4 || !warehouseId}
+                        submitLabel={processing ? "กำลังตรวจสอบ…" : "เข้าสู่ระบบ"}
+                    />
+                </div>
+                <p className="mt-4 text-center text-xs text-slate-400">สิทธิ์ใช้งานจัดการโดยผู้ดูแลระบบใน ERPNext</p>
+            </div>
+        </div>
+    );
+}
+
+function WarehousePinUnlock({ warehouses, domain }) {
     const { t } = useTranslation();
     const info = DOMAINS[domain] || DOMAINS.RM;
     const [pin, setPin] = useState("");
