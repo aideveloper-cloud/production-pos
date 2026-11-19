@@ -183,4 +183,48 @@ class CentralAccessTest extends TestCase
         $this->assertSame(0, $user->fresh()->outlets()->count());
         $this->assertDatabaseMissing('sessions', ['user_id' => $user->id]);
     }
+
+    #[Test]
+    public function a_session_of_an_account_erpnext_does_not_manage_is_ended(): void
+    {
+        // e.g. the shared POS account a warehouse PIN opened before central access was switched on
+        $pos = User::create(['name' => 'เครื่อง POS คลัง', 'email' => 'pos@wms.local', 'password' => 'x']);
+        $pos->markEmailAsVerified();
+        $pos->syncRoles(['warehouse-pos']);
+
+        $this->actingAs($pos)->get('/dashboard')->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function break_glass_and_erpnext_managed_sessions_stay(): void
+    {
+        $breakGlass = User::create(['name' => 'Super', 'email' => 'superadmin@wms.local', 'password' => 'x']);
+        $breakGlass->markEmailAsVerified();
+        $breakGlass->syncRoles(['warehouse-admin']);
+        $this->actingAs($breakGlass)->get('/dashboard')->assertOk();
+        $this->assertAuthenticatedAs($breakGlass);
+
+        $managed = User::create(['name' => 'หัวหน้าคลัง', 'email' => 'boss@example.com', 'password' => 'x']);
+        $managed->forceFill(['kgarden_managed' => true, 'employee_code' => 'EMP9'])->save();
+        $managed->markEmailAsVerified();
+        $managed->syncRoles(['warehouse-admin']);
+        $this->actingAs($managed)->get('/dashboard')->assertOk();
+        $this->assertAuthenticatedAs($managed);
+    }
+
+    #[Test]
+    public function the_dashboard_floor_records_the_signed_in_person_as_operator(): void
+    {
+        $boss = User::create(['name' => 'หัวหน้าคลัง', 'email' => 'boss@example.com', 'password' => 'x']);
+        $boss->forceFill(['kgarden_managed' => true, 'employee_code' => 'EMP9'])->save();
+        $boss->markEmailAsVerified();
+        $boss->syncRoles(['warehouse-admin']);
+
+        $this->actingAs($boss)->get('/dashboard/warehouse-floor')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('operatorLocked', true)
+                ->where('operatorName', 'หัวหน้าคลัง (EMP9)'));
+    }
 }

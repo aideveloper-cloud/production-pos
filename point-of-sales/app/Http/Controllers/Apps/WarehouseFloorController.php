@@ -394,10 +394,10 @@ class WarehouseFloorController extends Controller
             'products' => $products,
             'isAdmin' => $user->isWarehouseAdmin(),
             'presetsKg' => [1, 2, 5, 10, 20],
-            'operatorName' => (string) $request->session()->get('pos.operator_name', ''),
+            'operatorName' => $this->signedInOperator($request) ?? (string) $request->session()->get('pos.operator_name', ''),
             'requiresOperatorName' => true,
             // Signed in as a person (K Garden central access): the operator is that person, not typed.
-            'operatorLocked' => (bool) $request->session()->get('pos.person'),
+            'operatorLocked' => $this->signedInOperator($request) !== null,
             'posDomain' => $posDomain,
         ]);
     }
@@ -544,6 +544,24 @@ class WarehouseFloorController extends Controller
     /**
      * @param  array<string, mixed>  $validated
      */
+    /**
+     * The person who does every cut and receipt when that is known from the sign-in (K Garden
+     * central access): the employee signed in at the POS tablet, or the person signed in through
+     * ERPNext on the dashboard. Null when the operator still has to type their name.
+     */
+    private function signedInOperator(Request $request): ?string
+    {
+        if ($request->session()->get('pos.person')) {
+            return (string) $request->session()->get('pos.operator_name');
+        }
+        $user = $request->user();
+        if (config('kgarden.enabled') && $user?->kgarden_managed) {
+            return $user->name.($user->employee_code ? ' ('.$user->employee_code.')' : '');
+        }
+
+        return null;
+    }
+
     private function requireOperator(Request $request, array $validated): string
     {
         if ($request->session()->get('pos.person')) {
@@ -555,11 +573,8 @@ class WarehouseFloorController extends Controller
 
             return (string) $request->session()->get('pos.operator_name');
         }
-        if (config('kgarden.enabled') && $request->user()?->kgarden_managed) {
-            // Signed in through ERPNext on the dashboard: the operator is that person.
-            $user = $request->user();
-
-            return $user->name.($user->employee_code ? ' ('.$user->employee_code.')' : '');
+        if (($signedIn = $this->signedInOperator($request)) !== null) {
+            return $signedIn;
         }
         $operator = trim((string) ($validated['operator_name'] ?? ''));
         if (mb_strlen($operator) < 2) {

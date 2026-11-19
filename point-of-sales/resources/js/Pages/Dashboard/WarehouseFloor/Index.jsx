@@ -14,6 +14,7 @@ export default function WarehouseFloorIndex({
     isAdmin = false,
     presetsKg = KG_PRESETS,
     operatorName = "",
+    operatorLocked = false,
 }) {
     const { t } = useTranslation();
     const flash = usePage().props.flash;
@@ -332,21 +333,29 @@ export default function WarehouseFloorIndex({
                                                 </button>
                                             ))}
                                         </div>
-                                        <label className="block text-sm">
-                                            <span className="mb-1 block text-slate-600">
-                                                {t("warehouse.pos.operatorName")}
-                                            </span>
-                                            <input
-                                                required
-                                                minLength={2}
-                                                value={cutForm.data.operator_name}
-                                                onChange={(e) =>
-                                                    cutForm.setData("operator_name", e.target.value)
-                                                }
-                                                placeholder={t("warehouse.pos.operatorPlaceholder")}
-                                                className="w-full rounded-xl border-slate-200"
-                                            />
-                                        </label>
+                                        {operatorLocked ? (
+                                            // Signed in through ERPNext (K Garden): the operator is that person, not typed.
+                                            <div className="block text-sm">
+                                                <span className="mb-1 block text-slate-600">{t("warehouse.pos.operatorName")}</span>
+                                                <p className="rounded-xl bg-slate-100 px-3 py-2 font-semibold text-slate-800">{operatorName}</p>
+                                            </div>
+                                        ) : (
+                                            <label className="block text-sm">
+                                                <span className="mb-1 block text-slate-600">
+                                                    {t("warehouse.pos.operatorName")}
+                                                </span>
+                                                <input
+                                                    required
+                                                    minLength={2}
+                                                    value={cutForm.data.operator_name}
+                                                    onChange={(e) =>
+                                                        cutForm.setData("operator_name", e.target.value)
+                                                    }
+                                                    placeholder={t("warehouse.pos.operatorPlaceholder")}
+                                                    className="w-full rounded-xl border-slate-200"
+                                                />
+                                            </label>
+                                        )}
                                         {errorList(cutForm.errors).map((message) => (
                                             <p key={message} className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
                                                 {message}
@@ -470,21 +479,29 @@ export default function WarehouseFloorIndex({
                                         className="w-full rounded-xl border-slate-200"
                                     />
                                 </label>
-                                <label className="block text-sm">
-                                    <span className="mb-1 block text-slate-600">
-                                        {t("warehouse.pos.operatorName")}
-                                    </span>
-                                    <input
-                                        required
-                                        minLength={2}
-                                        value={receiveForm.data.operator_name}
-                                        onChange={(e) =>
-                                            receiveForm.setData("operator_name", e.target.value)
-                                        }
-                                        placeholder={t("warehouse.pos.operatorPlaceholder")}
-                                        className="w-full rounded-xl border-slate-200"
-                                    />
-                                </label>
+                                {operatorLocked ? (
+                                    // Signed in through ERPNext (K Garden): the operator is that person, not typed.
+                                    <div className="block text-sm">
+                                        <span className="mb-1 block text-slate-600">{t("warehouse.pos.operatorName")}</span>
+                                        <p className="rounded-xl bg-slate-100 px-3 py-2 font-semibold text-slate-800">{operatorName}</p>
+                                    </div>
+                                ) : (
+                                    <label className="block text-sm">
+                                        <span className="mb-1 block text-slate-600">
+                                            {t("warehouse.pos.operatorName")}
+                                        </span>
+                                        <input
+                                            required
+                                            minLength={2}
+                                            value={receiveForm.data.operator_name}
+                                            onChange={(e) =>
+                                                receiveForm.setData("operator_name", e.target.value)
+                                            }
+                                            placeholder={t("warehouse.pos.operatorPlaceholder")}
+                                            className="w-full rounded-xl border-slate-200"
+                                        />
+                                    </label>
+                                )}
                                 {errorList(receiveForm.errors).map((message) => (
                                     <p key={message} className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
                                         {message}
