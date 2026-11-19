@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnforceAbsoluteSessionLifetime;
 use App\Http\Middleware\EnsureActiveCashierShift;
 use App\Http\Middleware\EnsureBotGuard;
+use App\Http\Middleware\EnsureKGardenAccess;
 use App\Http\Middleware\EnsureNotInstalled;
 use App\Http\Middleware\EnsurePublicRegistrationEnabled;
 use App\Http\Middleware\EnsureRecentPasswordConfirmation;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SetLocale::class,
             SecureHeaders::class,
             EnforceAbsoluteSessionLifetime::class,
+            EnsureKGardenAccess::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\BlockRetailInWarehouseMode::class,
