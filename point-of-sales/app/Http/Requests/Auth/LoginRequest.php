@@ -44,6 +44,15 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // K Garden central access: people sign in through ERPNext; only break-glass accounts
+        // (config kgarden.local_login) may still use a WMS password.
+        if (config('kgarden.enabled')
+            && ! in_array(strtolower($this->string('email')->toString()), array_map('strtolower', config('kgarden.local_login')), true)) {
+            throw ValidationException::withMessages([
+                'email' => 'บัญชีนี้เข้าสู่ระบบด้วยปุ่ม "เข้าสู่ระบบด้วย K Garden"',
+            ]);
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

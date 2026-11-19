@@ -31,6 +31,7 @@ class AuthenticatedSessionController extends Controller
             'botGuard' => BotGuard::payload(),
             'isWarehouseMode' => (bool) config('warehouse.is_warehouse'),
             'posEntryUrl' => route('pos.index', absolute: false),
+            'kgardenSso' => config('kgarden.enabled') ? route('kgarden.redirect', absolute: false) : null,
         ]);
     }
 
