@@ -6,6 +6,7 @@ import {
     IconSun,
     IconSearch,
     IconQuestionMark,
+    IconApps,
 } from "@tabler/icons-react";
 import AuthDropdown from "@/Components/Dashboard/AuthDropdown";
 import LanguageSwitcher from "@/Components/Dashboard/LanguageSwitcher";
@@ -16,7 +17,7 @@ import { useTour } from "@/Hooks/useTour";
 import i18n from "@/i18n";
 
 export default function Navbar({ toggleSidebar, themeSwitcher, darkMode }) {
-    const { auth, storeProfile, isWarehouseMode } = usePage().props;
+    const { auth, storeProfile, isWarehouseMode, kgardenAppsUrl } = usePage().props;
     const { start: startTour, isActive: tourActive } = useTour("dashboard");
     const menuNavigation = Menu();
 
@@ -92,6 +93,19 @@ export default function Navbar({ toggleSidebar, themeSwitcher, darkMode }) {
                 {/* Warehouse mode scopes by the user's warehouses, not the active outlet */}
                 {!isWarehouseMode && (
                     <OutletSwitcher outlet={auth?.currentOutlet} outlets={auth?.outlets} locked={auth?.outletLocked} />
+                )}
+                {/* K Garden apps (MES, ConstructionERP, ...): the person's own list, kept by ERPNext */}
+                {kgardenAppsUrl && (
+                    <a
+                        href={kgardenAppsUrl}
+                        target="_blank"
+                        rel="noopener"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40 transition-colors"
+                        title={i18n.t("kgarden.apps_hint")}
+                    >
+                        <IconApps size={20} strokeWidth={1.5} />
+                        <span className="hidden md:inline">{i18n.t("kgarden.apps")}</span>
+                    </a>
                 )}
                 {/* Tour Guide */}
                 <button

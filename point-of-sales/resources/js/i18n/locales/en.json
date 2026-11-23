@@ -1183,5 +1183,9 @@
         "balances": "Export balances",
         "materials": "Export materials",
         "movements": "Export movements"
+    },
+    "kgarden": {
+        "apps": "K Garden apps",
+        "apps_hint": "Open the other K Garden apps you may use (MES, ConstructionERP, ERPNext)"
     }
 }
