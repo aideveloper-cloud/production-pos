@@ -1109,5 +1109,9 @@
         "balances": "Ekspor saldo stok",
         "materials": "Ekspor bahan",
         "movements": "Ekspor mutasi"
+    },
+    "kgarden": {
+        "apps": "Aplikasi K Garden",
+        "apps_hint": "Buka aplikasi K Garden lain yang boleh Anda pakai (MES, ConstructionERP, ERPNext)"
     }
 }

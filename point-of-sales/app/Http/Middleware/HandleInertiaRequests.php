@@ -287,6 +287,10 @@ class HandleInertiaRequests extends Middleware
             'pendingApprovalCount' => $pendingApprovalCount,
             'pendingDineOrdersCount' => $pendingDineOrdersCount,
             'appVersion' => config('app.version'),
+            // K Garden central access: the signed-in person's K Garden apps, listed by ERPNext.
+            'kgardenAppsUrl' => $request->user() && config('kgarden.enabled') && config('kgarden.erp_url')
+                ? config('kgarden.erp_url').'/kgarden-apps'
+                : null,
             'appMode' => config('warehouse.mode', 'retail'),
             'isWarehouseMode' => (bool) config('warehouse.is_warehouse'),
             'dailyStockDigest' => $dailyStockDigest,

@@ -1199,5 +1199,9 @@
         "balances": "ส่งออกยอดคงเหลือ",
         "materials": "ส่งออกวัตถุดิบ",
         "movements": "Export ความเคลื่อนไหว"
+    },
+    "kgarden": {
+        "apps": "แอป K Garden",
+        "apps_hint": "เปิดแอป K Garden อื่นที่คุณใช้ได้ (MES, ConstructionERP, ERPNext)"
     }
 }
