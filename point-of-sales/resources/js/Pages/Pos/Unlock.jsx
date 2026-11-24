@@ -10,6 +10,7 @@ const PIN_LENGTH = 4;
 const DOMAINS = {
     RM: { label: "RM วัตถุดิบ", tone: "bg-amber-500 text-slate-950" },
     FG: { label: "FG สินค้าสำเร็จรูป", tone: "bg-sky-500 text-white" },
+    PRODUCTION: { label: "ผลิต หน้างานผลิต", tone: "bg-emerald-600 text-white" },
 };
 
 export default function PosUnlock({ warehouses = [], domain = "RM", centralAccess = false }) {
