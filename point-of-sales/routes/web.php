@@ -22,6 +22,7 @@ use App\Http\Controllers\Apps\PaymentSettingController;
 use App\Http\Controllers\Apps\PriceListController;
 use App\Http\Controllers\Apps\PricingRuleController;
 use App\Http\Controllers\Apps\ProductController;
+use App\Http\Controllers\Apps\ProductionFloorController;
 use App\Http\Controllers\Apps\PurchaseOrderController;
 use App\Http\Controllers\Apps\ReceivableController;
 use App\Http\Controllers\Apps\SalesReturnController;
@@ -102,12 +103,19 @@ Route::post('/language/switch', [LanguageController::class, 'switch'])->name('la
 Route::get('/auth/kgarden/redirect', [KGardenSsoController::class, 'redirect'])->name('kgarden.redirect');
 Route::get('/auth/kgarden/callback', [KGardenSsoController::class, 'callback'])->name('kgarden.callback');
 
-// Tablet POS (warehouse cut/receive) — two separate POS: /pos/rm (raw material) and /pos/fg (finished goods).
+// Tablet POS — three separate POS: /pos/rm (raw material), /pos/fg (finished goods), /pos/production (shop floor).
 // PIN unlock, full-screen; a device unlocked on one POS stays on that POS.
 Route::get('/tablet', fn () => redirect()->route('pos.index'))->name('tablet');
 Route::get('/pos', [WarehouseFloorController::class, 'entry'])->name('pos.index');
 
-Route::prefix('/pos/{domain}')->whereIn('domain', ['rm', 'fg'])->group(function () {
+// Production POS: ERPNext Work Orders on the tablet (start/stop, report finished quantity into the warehouse).
+Route::prefix('/pos/production')->middleware(['auth', 'verified', 'permission:stock-mutations-access', 'throttle:120,1'])->group(function () {
+    Route::post('/work-orders/{workOrder}/start', [ProductionFloorController::class, 'start'])->name('pos.production.start');
+    Route::post('/work-orders/{workOrder}/stop', [ProductionFloorController::class, 'stop'])->name('pos.production.stop');
+    Route::post('/work-orders/{workOrder}/output', [ProductionFloorController::class, 'output'])->name('pos.production.output');
+});
+
+Route::prefix('/pos/{domain}')->whereIn('domain', ['rm', 'fg', 'production'])->group(function () {
     Route::get('/', [WarehouseFloorController::class, 'pos'])->name('pos.show');
     Route::post('/unlock', [WarehouseFloorController::class, 'unlock'])
         ->middleware('throttle:20,1')

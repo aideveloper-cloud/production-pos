@@ -16,7 +16,8 @@ Spoolman ใช้ image `ghcr.io/donkie/spoolman` ตรงๆ (fork: [aidevelo
 
 `APP_MODE=warehouse` เปลี่ยนแอปเป็น WMS แบบ slim:
 
-- POS แท็บเล็ตแยก 2 ระบบ: `/pos/rm` วัตถุดิบ (รับเข้า / ตัด) และ `/pos/fg` สินค้าสำเร็จรูป (รับเข้า / จ่ายออก) ปลดล็อกด้วย PIN คลัง — เครื่องที่ปลดล็อกที่ POS ไหนจะอยู่ที่ POS นั้น
+- POS แท็บเล็ตแยก 3 ระบบ: `/pos/rm` วัตถุดิบ (รับเข้า / ตัด), `/pos/fg` สินค้าสำเร็จรูป (รับเข้า / จ่ายออก) และ `/pos/production` หน้างานผลิต ปลดล็อกด้วย PIN คลัง (หรือรหัสพนักงาน + PIN เมื่อเปิด K Garden central access) — เครื่องที่ปลดล็อกที่ POS ไหนจะอยู่ที่ POS นั้น
+- POS ผลิต: ดึงใบสั่งผลิต (Work Order) ที่เปิดอยู่จาก ERPNext (`kgarden.manufacturing.floor.work_orders` ด้วย service account เดียวกับ central access), กดเริ่ม/หยุดผลิต, บันทึกยอดของดี/ของเสีย — ของดีเข้าคลังนี้เป็น FG ทันที (ledger `reference_type = production_output`, `meta.work_order`) แล้ว stock bridge ลงเป็น Manufacture Stock Entry ใน ERPNext (ตัดวัตถุดิบจาก WIP ตาม BOM) สินค้า FG ต้องมีใน WMS ก่อน (SKU = รหัสสินค้าใน ERPNext)
 - เมนูคลัง RM: วัตถุดิบ, รับเข้า/จัดซื้อ, สต็อกคลัง, ระบบ
 - เมนูขายปลีก (ขาย, CRM, ทานที่ร้าน, กะแคชเชียร์ ฯลฯ) ถูกซ่อนและ route ถูกบล็อก (404)
 - Spoolman เป็นแค่ engine น้ำหนัก/spool — ห้ามให้พนักงานเข้า UI ของ Spoolman (ไม่มี auth)

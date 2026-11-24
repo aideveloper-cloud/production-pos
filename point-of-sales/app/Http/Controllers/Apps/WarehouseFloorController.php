@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Apps;
 
+use App\Http\Controllers\Apps\Concerns\ResolvesPosOperator;
 use App\Http\Controllers\Controller;
 use App\Models\PhysicalUnit;
 use App\Models\Product;
@@ -24,6 +25,11 @@ use Throwable;
 
 class WarehouseFloorController extends Controller
 {
+    use ResolvesPosOperator;
+
+    /** The tablet POS: raw material, finished goods, and the production floor. */
+    public const POS_DOMAINS = ['RM', 'FG', 'PRODUCTION'];
+
     public function __construct(
         private readonly OutletAccessService $outletAccessService,
         private readonly WarehouseStockMovementService $movementService,
@@ -76,6 +82,10 @@ class WarehouseFloorController extends Controller
         $deviceDomain = $this->deviceDomain($request);
         if ($deviceDomain && $deviceDomain !== $domain) {
             return redirect()->route('pos.show', ['domain' => strtolower($deviceDomain)]);
+        }
+
+        if ($domain === 'PRODUCTION') {
+            return app(ProductionFloorController::class)->render($request, $sessionWarehouseId);
         }
 
         return $this->renderFloor($request, 'Pos/Index', $sessionWarehouseId, $domain);
@@ -162,22 +172,6 @@ class WarehouseFloorController extends Controller
         ]);
 
         return redirect()->route('pos.show', ['domain' => strtolower($domain)]);
-    }
-
-    private function posIdleExpired(Request $request): bool
-    {
-        $last = (int) $request->session()->get('pos.last_seen', 0);
-
-        return (bool) $request->session()->get('pos.person')
-            && $last > 0
-            && now()->timestamp - $last > (int) config('kgarden.pos_idle_minutes', 10) * 60;
-    }
-
-    private function endPosPerson(Request $request): void
-    {
-        $request->session()->forget(['pos.warehouse_id', 'pos.operator_name', 'pos.person', 'pos.last_seen']);
-        Auth::guard('web')->logout();
-        $request->session()->regenerateToken();
     }
 
     public function lock(Request $request): RedirectResponse
@@ -510,23 +504,9 @@ class WarehouseFloorController extends Controller
     private function routeDomain(string $domain): string
     {
         $domain = strtoupper($domain);
-        abort_unless(in_array($domain, ['RM', 'FG'], true), 404);
+        abort_unless(in_array($domain, self::POS_DOMAINS, true), 404);
 
         return $domain;
-    }
-
-    /**
-     * The POS a PIN-unlocked device was opened as; null for admins and dashboard users.
-     */
-    private function deviceDomain(Request $request): ?string
-    {
-        if ($request->user()?->isWarehouseAdmin() || (int) $request->session()->get('pos.warehouse_id', 0) <= 0) {
-            return null;
-        }
-
-        $domain = (string) $request->session()->get('pos.domain', '');
-
-        return in_array($domain, ['RM', 'FG'], true) ? $domain : null;
     }
 
     private function assertPosWarehouse(Request $request, int $warehouseId): void
@@ -539,53 +519,6 @@ class WarehouseFloorController extends Controller
         if ($locked > 0 && $locked !== $warehouseId) {
             abort(403, 'Warehouse locked by POS PIN.');
         }
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    /**
-     * The person who does every cut and receipt when that is known from the sign-in (K Garden
-     * central access): the employee signed in at the POS tablet, or the person signed in through
-     * ERPNext on the dashboard. Null when the operator still has to type their name.
-     */
-    private function signedInOperator(Request $request): ?string
-    {
-        if ($request->session()->get('pos.person')) {
-            return (string) $request->session()->get('pos.operator_name');
-        }
-        $user = $request->user();
-        if (config('kgarden.enabled') && $user?->kgarden_managed) {
-            return $user->name.($user->employee_code ? ' ('.$user->employee_code.')' : '');
-        }
-
-        return null;
-    }
-
-    private function requireOperator(Request $request, array $validated): string
-    {
-        if ($request->session()->get('pos.person')) {
-            if ($this->posIdleExpired($request)) {
-                $this->endPosPerson($request);
-                abort(401, 'หมดเวลาใช้งาน กรุณาเข้าสู่ระบบใหม่');
-            }
-            $request->session()->put('pos.last_seen', now()->timestamp);
-
-            return (string) $request->session()->get('pos.operator_name');
-        }
-        if (($signedIn = $this->signedInOperator($request)) !== null) {
-            return $signedIn;
-        }
-        $operator = trim((string) ($validated['operator_name'] ?? ''));
-        if (mb_strlen($operator) < 2) {
-            throw ValidationException::withMessages([
-                'operator_name' => 'กรุณาใส่ชื่อผู้ทำรายการก่อนตัดหรือรับเข้า',
-            ]);
-        }
-
-        $request->session()->put('pos.operator_name', $operator);
-
-        return $operator;
     }
 
     private function unitWeightKg(PhysicalUnit $unit): ?string

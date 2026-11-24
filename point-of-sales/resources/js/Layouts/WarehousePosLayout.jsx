@@ -12,8 +12,8 @@ import { useTranslation } from "react-i18next";
 export default function WarehousePosLayout({ children, warehouseName, showLock = false, domain = null }) {
     const { t } = useTranslation();
     const { auth } = usePage().props;
-    const domainTone = domain === "FG" ? "bg-sky-600" : domain === "RM" ? "bg-amber-500" : "bg-slate-900";
-    const domainLabel = domain === "FG" ? "FG สินค้าสำเร็จรูป" : domain === "RM" ? "RM วัตถุดิบ" : null;
+    const domainTone = { FG: "bg-sky-600", RM: "bg-amber-500", PRODUCTION: "bg-emerald-600" }[domain] || "bg-slate-900";
+    const domainLabel = { FG: "FG สินค้าสำเร็จรูป", RM: "RM วัตถุดิบ", PRODUCTION: "ผลิต หน้างานผลิต" }[domain] || null;
     const [isFullscreen, setIsFullscreen] = useState(false);
     const lockForm = useForm({});
 
